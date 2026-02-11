@@ -25,6 +25,11 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "우아식 - 우리아이식단",
+    description: "우리 아이의 건강한 식단을 관리해보세요",
+  },
 };
 
 export default function RootLayout({

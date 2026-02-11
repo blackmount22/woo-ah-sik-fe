@@ -70,6 +70,48 @@ export function getStage(months: number): Stage {
   };
 }
 
+// 분유량 계산
+export interface FormulaAmount {
+  dailyTotal: number;
+  perFeedingMin: number;
+  perFeedingMax: number;
+  feedingsPerDay: number;
+  intervalDesc: string;
+}
+
+export function calcFormulaAmount(
+  months: number,
+  weightKg: number
+): FormulaAmount {
+  // 체중 기준 하루 권장량 (150ml/kg), 4개월 미만은 1000ml 초과 금지
+  const rawDaily = Math.round(weightKg * 150);
+  const dailyTotal = Math.min(rawDaily, 1000);
+
+  // 월령별 수유 횟수·간격
+  let intervalDesc: string;
+  let feedingsPerDay: number;
+
+  if (months < 1) {
+    feedingsPerDay = 8;
+    intervalDesc = "3시간";
+  } else if (months < 2) {
+    feedingsPerDay = 6;
+    intervalDesc = "4시간";
+  } else if (months < 3) {
+    feedingsPerDay = 5;
+    intervalDesc = "약 5시간";
+  } else {
+    feedingsPerDay = 5;
+    intervalDesc = "약 5시간";
+  }
+
+  // 체중 기반 1회 적정량 계산 (10ml 단위, 하루 총량 초과 방지)
+  const perFeedingMax = Math.floor(dailyTotal / feedingsPerDay / 10) * 10;
+  const perFeedingMin = Math.max(perFeedingMax - 20, 10);
+
+  return { dailyTotal, perFeedingMin, perFeedingMax, feedingsPerDay, intervalDesc };
+}
+
 // 식단 데이터 풀
 interface MealPool {
   breakfast: string[];

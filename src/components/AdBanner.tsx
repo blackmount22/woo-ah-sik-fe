@@ -19,12 +19,31 @@ export default function AdBanner({ adSlot, adClient }: AdBannerProps) {
 
   useEffect(() => {
     if (pushed.current) return;
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-      pushed.current = true;
-    } catch {
-      // AdSense not loaded yet
+
+    const pushAd = () => {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        pushed.current = true;
+      } catch {
+        // AdSense not ready
+      }
+    };
+
+    // AdSense 스크립트가 이미 로드된 경우
+    if (window.adsbygoogle) {
+      pushAd();
+      return;
     }
+
+    // 스크립트 로드를 기다림
+    const interval = setInterval(() => {
+      if (window.adsbygoogle) {
+        pushAd();
+        clearInterval(interval);
+      }
+    }, 300);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
