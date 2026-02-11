@@ -5,6 +5,7 @@ import type { DayMeal, Stage } from "@/lib/mealPlan";
 import { getRecipe } from "@/lib/recipes";
 import type { Recipe } from "@/lib/recipes";
 import { getSeasonalMatch } from "@/lib/seasonal";
+import { getAllergenMatches } from "@/lib/allergens";
 import RecipeModal from "./RecipeModal";
 
 interface WeeklyMealPlanProps {
@@ -88,6 +89,13 @@ export default function WeeklyMealPlan({
           {stage.description} ({stage.mealsPerDay})
         </p>
       </div>
+
+      {/* 알레르기 유의 안내 */}
+      {stage.hasMenu && (
+        <p className="text-[11px] text-primary text-center mb-4">
+          * 알레르기 유의 — 식단에 포함된 알레르기 유발 식품을 확인해주세요.
+        </p>
+      )}
 
       {/* 모유/분유기 안내 */}
       {!stage.hasMenu ? (
@@ -239,6 +247,7 @@ function MealCard({
 }) {
   const hasRecipe = !!getRecipe(menu);
   const seasonal = getSeasonalMatch(menu);
+  const allergens = getAllergenMatches(menu);
 
   return (
     <button
@@ -275,6 +284,18 @@ function MealCard({
         <p className="text-[11px] text-accent mt-1 pl-7">
           제철 재료: {seasonal.ingredients.join(", ")}
         </p>
+      )}
+      {allergens.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2 pl-7">
+          {allergens.map((a) => (
+            <span
+              key={a.name}
+              className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 font-medium"
+            >
+              {a.icon} {a.name}
+            </span>
+          ))}
+        </div>
       )}
     </button>
   );

@@ -4,6 +4,7 @@ import { useState } from "react";
 import ChildCountSelector from "@/components/ChildCountSelector";
 import BirthDateInput from "@/components/BirthDateInput";
 import WeeklyMealPlan from "@/components/WeeklyMealPlan";
+import AdBanner from "@/components/AdBanner";
 import {
   calcMonths,
   getStage,
@@ -11,6 +12,9 @@ import {
   type DayMeal,
   type Stage,
 } from "@/lib/mealPlan";
+
+const AD_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "";
+const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT ?? "";
 
 interface BirthDate {
   year: string;
@@ -83,7 +87,7 @@ export default function Home() {
   // 식단표 결과 화면
   if (plans) {
     return (
-      <div className="min-h-screen flex flex-col items-center px-4 py-8 sm:py-16">
+      <div className="min-h-screen flex flex-col items-center px-4 py-8 pb-20 sm:py-16">
         <main className="w-full max-w-md flex flex-col items-center gap-10">
           {/* 로고 */}
           <div className="text-center">
@@ -115,13 +119,17 @@ export default function Home() {
             다시 선택하기
           </button>
         </main>
+
+        {AD_CLIENT && AD_SLOT && (
+          <AdBanner adClient={AD_CLIENT} adSlot={AD_SLOT} />
+        )}
       </div>
     );
   }
 
   // 입력 폼 화면
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-8 sm:py-16">
+    <div className="min-h-screen flex flex-col items-center px-4 py-8 pb-20 sm:py-16">
       <main className="w-full max-w-md flex flex-col items-center gap-8">
         {/* 로고 / 타이틀 */}
         <div className="text-center">
@@ -174,6 +182,10 @@ export default function Home() {
           시작하기
         </button>
       </main>
+
+      {AD_CLIENT && AD_SLOT && (
+        <AdBanner adClient={AD_CLIENT} adSlot={AD_SLOT} />
+      )}
     </div>
   );
 }
