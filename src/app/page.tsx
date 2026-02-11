@@ -1,64 +1,178 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import ChildCountSelector from "@/components/ChildCountSelector";
+import BirthDateInput from "@/components/BirthDateInput";
+import WeeklyMealPlan from "@/components/WeeklyMealPlan";
+import {
+  calcMonths,
+  getStage,
+  generateWeeklyPlan,
+  type DayMeal,
+  type Stage,
+} from "@/lib/mealPlan";
+
+interface BirthDate {
+  year: string;
+  month: string;
+  day: string;
+}
+
+interface ChildPlan {
+  label: string;
+  months: number;
+  stage: Stage;
+  weeklyPlan: DayMeal[];
+}
+
+const childLabels = ["첫째 아이", "둘째 아이", "셋째 아이", "넷째 아이"];
 
 export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+  const [childCount, setChildCount] = useState(1);
+  const [birthDates, setBirthDates] = useState<BirthDate[]>(
+    Array.from({ length: 4 }, () => ({ year: "", month: "", day: "" }))
+  );
+  const [plans, setPlans] = useState<ChildPlan[] | null>(null);
+
+  const handleChildCountChange = (count: number) => {
+    setChildCount(count);
+  };
+
+  const handleBirthDateChange = (
+    index: number,
+    field: "year" | "month" | "day",
+    value: string
+  ) => {
+    setBirthDates((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      if (field === "month" || field === "year") {
+        next[index].day = "";
+      }
+      return next;
+    });
+  };
+
+  const isFormComplete = birthDates
+    .slice(0, childCount)
+    .every((d) => d.year && d.month && d.day);
+
+  const handleSubmit = () => {
+    if (!isFormComplete) return;
+
+    const selected = birthDates.slice(0, childCount);
+    const generated = selected.map((d, i) => {
+      const months = calcMonths(Number(d.year), Number(d.month), Number(d.day));
+      const stage = getStage(months);
+      const weeklyPlan = generateWeeklyPlan(months);
+      return {
+        label: childLabels[i],
+        months,
+        stage,
+        weeklyPlan,
+      };
+    });
+
+    setPlans(generated);
+  };
+
+  const handleReset = () => {
+    setPlans(null);
+  };
+
+  // 식단표 결과 화면
+  if (plans) {
+    return (
+      <div className="min-h-screen flex flex-col items-center px-4 py-8 sm:py-16">
+        <main className="w-full max-w-md flex flex-col items-center gap-10">
+          {/* 로고 */}
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-primary tracking-tight">
+              우아식
+            </h1>
+            <p className="mt-1 text-sm text-text-light">
+              일주일 식단표
+            </p>
+          </div>
+
+          {/* 자녀별 식단표 */}
+          {plans.map((plan, i) => (
+            <WeeklyMealPlan
+              key={i}
+              childLabel={plan.label}
+              months={plan.months}
+              stage={plan.stage}
+              weeklyPlan={plan.weeklyPlan}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          ))}
+
+          {/* 다시 선택하기 버튼 */}
+          <button
+            type="button"
+            onClick={handleReset}
+            className="w-full py-4 rounded-2xl text-lg font-bold bg-white text-primary border-2 border-primary hover:bg-primary hover:text-white transition-all active:scale-[0.98]"
           >
-            Documentation
-          </a>
+            다시 선택하기
+          </button>
+        </main>
+      </div>
+    );
+  }
+
+  // 입력 폼 화면
+  return (
+    <div className="min-h-screen flex flex-col items-center px-4 py-8 sm:py-16">
+      <main className="w-full max-w-md flex flex-col items-center gap-8">
+        {/* 로고 / 타이틀 */}
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-primary tracking-tight">
+            우아식
+          </h1>
+          <p className="mt-1 text-sm text-text-light">우리아이식단</p>
         </div>
+
+        {/* 서비스 소개 */}
+        <p className="text-center text-text-light leading-relaxed text-sm">
+          우리 아이의 나이에 맞는
+          <br />
+          건강한 식단을 추천해드려요.
+        </p>
+
+        {/* 자녀 수 선택 */}
+        <ChildCountSelector
+          count={childCount}
+          onChange={handleChildCountChange}
+        />
+
+        {/* 생년월일 입력 */}
+        <div className="w-full flex flex-col gap-4">
+          {Array.from({ length: childCount }, (_, i) => (
+            <BirthDateInput
+              key={i}
+              index={i}
+              year={birthDates[i].year}
+              month={birthDates[i].month}
+              day={birthDates[i].day}
+              onChange={(field, value) =>
+                handleBirthDateChange(i, field, value)
+              }
+            />
+          ))}
+        </div>
+
+        {/* 시작하기 버튼 */}
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!isFormComplete}
+          className={`w-full py-4 rounded-2xl text-lg font-bold transition-all ${
+            isFormComplete
+              ? "bg-primary text-white shadow-lg hover:bg-primary-dark active:scale-[0.98]"
+              : "bg-border text-text-light cursor-not-allowed"
+          }`}
+        >
+          시작하기
+        </button>
       </main>
     </div>
   );
