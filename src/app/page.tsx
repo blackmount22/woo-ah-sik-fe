@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import ChildCountSelector from "@/components/ChildCountSelector";
 import BirthDateInput from "@/components/BirthDateInput";
 import WeightInput from "@/components/WeightInput";
@@ -37,13 +37,47 @@ interface ChildPlan {
 
 const childLabels = ["첫째 아이", "둘째 아이", "셋째 아이", "넷째 아이"];
 
+const STORAGE_KEY = "woo-ah-sik-child-data";
+
+const defaultBirthDates = (): BirthDate[] =>
+  Array.from({ length: 4 }, () => ({ year: "", month: "", day: "" }));
+const defaultWeights = (): string[] => Array(4).fill("");
+
 export default function Home() {
   const [childCount, setChildCount] = useState(1);
-  const [birthDates, setBirthDates] = useState<BirthDate[]>(
-    Array.from({ length: 4 }, () => ({ year: "", month: "", day: "" }))
-  );
-  const [weights, setWeights] = useState<string[]>(Array(4).fill(""));
+  const [birthDates, setBirthDates] = useState<BirthDate[]>(defaultBirthDates);
+  const [weights, setWeights] = useState<string[]>(defaultWeights);
   const [plans, setPlans] = useState<ChildPlan[] | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const skipSave = useRef(false);
+
+  // localStorage에서 복원
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const data = JSON.parse(stored);
+        if (data.childCount) setChildCount(data.childCount);
+        if (data.birthDates) setBirthDates(data.birthDates);
+        if (data.weights) setWeights(data.weights);
+        if (data.plans) setPlans(data.plans);
+      }
+    } catch {}
+    setHydrated(true);
+  }, []);
+
+  // 상태 변경 시 localStorage에 저장
+  useEffect(() => {
+    if (!hydrated) return;
+    if (skipSave.current) {
+      skipSave.current = false;
+      return;
+    }
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ childCount, birthDates, weights, plans })
+    );
+  }, [childCount, birthDates, weights, plans, hydrated]);
 
   const handleChildCountChange = (count: number) => {
     setChildCount(count);
@@ -120,7 +154,12 @@ export default function Home() {
   };
 
   const handleReset = () => {
+    skipSave.current = true;
+    setChildCount(1);
+    setBirthDates(defaultBirthDates());
+    setWeights(defaultWeights());
     setPlans(null);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   // 식단표 결과 화면
