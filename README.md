@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 우아식 — 우리아이식단
 
-## Getting Started
+아이의 생년월일을 입력하면 월령에 맞는 **일주일 식단표**를 자동으로 만들어주는 서비스입니다.
 
-First, run the development server:
+## 주요 기능
+
+- **월령별 식단 추천** — 초기·중기·후기·완료기 이유식부터 유아식까지, 아이 나이에 맞는 식단을 자동 생성합니다.
+- **분유 적정량 계산** — 모유/분유기 아기는 체중을 입력하면 하루 권장 수유량과 1회 적정량을 알려줍니다.
+- **레시피 제공** — 각 메뉴를 터치하면 재료와 조리법을 바로 확인할 수 있습니다.
+- **외부 레시피 검색** — 메뉴 옆 `>` 버튼으로 네이버에서 해당 음식 만드는 법을 바로 검색할 수 있습니다.
+- **제철 재료 표시** — 현재 제철인 재료가 포함된 메뉴를 알려줍니다.
+- **알레르기 유발 식품 안내** — 식단에 포함된 알레르기 유발 식품(우유, 계란, 밀 등)을 표시합니다.
+- **다자녀 지원** — 최대 4명까지 아이별 식단을 한 번에 생성할 수 있습니다.
+- **자동 저장** — 입력 정보와 식단 결과가 브라우저에 저장되어 다시 방문해도 유지됩니다.
+
+## 이유식 단계
+
+| 월령 | 단계 | 식사 횟수 |
+|------|------|-----------|
+| 0~3개월 | 모유/분유기 | 수유 |
+| 4~5개월 | 초기 이유식 | 1일 1회 |
+| 6~7개월 | 중기 이유식 | 1일 1~2회 |
+| 8~9개월 | 후기 이유식 | 1일 2~3회 |
+| 10~11개월 | 완료기 이유식 | 1일 3회 |
+| 12~35개월 | 유아식 | 1일 3회 + 간식 |
+| 36개월~ | 일반 유아식 | 1일 3회 + 간식 |
+
+## 기술 스택
+
+- **Next.js 16** + **React 19**
+- **TypeScript**
+- **Tailwind CSS 4**
+- **Vercel** 배포
+
+## 로컬 실행
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+브라우저에서 [http://localhost:3333](http://localhost:3333)으로 접속합니다.

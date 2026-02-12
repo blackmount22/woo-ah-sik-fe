@@ -236,6 +236,11 @@ export default function WeeklyMealPlan({
   );
 }
 
+function getSearchUrl(menu: string): string {
+  const query = encodeURIComponent(`${menu} 만들기`);
+  return `https://search.naver.com/search.naver?query=${query}`;
+}
+
 function MealCard({
   type,
   menu,
@@ -277,6 +282,16 @@ function MealCard({
               레시피 보기
             </span>
           )}
+          <a
+            href={getSearchUrl(menu)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded-full border border-primary/30 font-bold hover:bg-primary/20 transition-colors"
+            title={`${menu} 만들기 검색`}
+          >
+            &gt;
+          </a>
         </div>
       </div>
       <p className="text-text font-medium pl-7">{menu}</p>
