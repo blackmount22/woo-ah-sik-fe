@@ -11,8 +11,10 @@ import {
   calcMonths,
   getStage,
   generateWeeklyPlan,
+  generateMonthlyPlan,
   calcFormulaAmount,
   type DayMeal,
+  type MonthPlan,
   type Stage,
   type FormulaAmount,
 } from "@/lib/mealPlan";
@@ -31,6 +33,7 @@ interface ChildPlan {
   months: number;
   stage: Stage;
   weeklyPlan: DayMeal[];
+  monthlyPlan: MonthPlan | null;
   weightKg?: number;
   formula?: FormulaAmount;
 }
@@ -60,7 +63,16 @@ export default function Home() {
         if (data.childCount) setChildCount(data.childCount);
         if (data.birthDates) setBirthDates(data.birthDates);
         if (data.weights) setWeights(data.weights);
-        if (data.plans) setPlans(data.plans);
+        if (data.plans) {
+          // 기존 데이터에 monthlyPlan이 없으면 생성
+          const migrated = data.plans.map((p: ChildPlan) => {
+            if (p.stage.hasMenu && !p.monthlyPlan) {
+              return { ...p, monthlyPlan: generateMonthlyPlan(p.months) };
+            }
+            return p;
+          });
+          setPlans(migrated);
+        }
       }
     } catch {}
     setHydrated(true);
@@ -132,12 +144,14 @@ export default function Home() {
       const months = calcMonths(Number(d.year), Number(d.month), Number(d.day));
       const stage = getStage(months);
       const weeklyPlan = generateWeeklyPlan(months);
+      const monthlyPlan = generateMonthlyPlan(months);
 
       const plan: ChildPlan = {
         label: childLabels[i],
         months,
         stage,
         weeklyPlan,
+        monthlyPlan,
       };
 
       // 분유기 아기면 분유량 계산 결과 포함
@@ -173,7 +187,7 @@ export default function Home() {
               우아식
             </h1>
             <p className="mt-1 text-sm text-text-light">
-              일주일 식단표
+              우리아이 식단표
             </p>
           </div>
 
@@ -195,6 +209,7 @@ export default function Home() {
                 months={plan.months}
                 stage={plan.stage}
                 weeklyPlan={plan.weeklyPlan}
+                monthlyPlan={plan.monthlyPlan}
               />
             )
           )}

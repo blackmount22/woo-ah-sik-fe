@@ -329,11 +329,15 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-// 풀에서 7개 겹치지 않게 선택
-function pickSeven(pool: string[]): string[] {
-  if (pool.length === 0) return Array(7).fill("");
+// 풀에서 n개 겹치지 않게 선택
+function pickN(pool: string[], n: number): string[] {
+  if (pool.length === 0) return Array(n).fill("");
   const shuffled = shuffle(pool);
-  return Array.from({ length: 7 }, (_, i) => shuffled[i % shuffled.length]);
+  return Array.from({ length: n }, (_, i) => shuffled[i % shuffled.length]);
+}
+
+function pickSeven(pool: string[]): string[] {
+  return pickN(pool, 7);
 }
 
 export interface DayMeal {
@@ -365,4 +369,48 @@ export function generateWeeklyPlan(months: number): DayMeal[] {
     dinner: dinners[i],
     snack: snacks[i],
   }));
+}
+
+// ── 월간 식단 ──
+
+export interface MonthDayMeal {
+  date: number;
+  breakfast: string;
+  lunch: string;
+  dinner: string;
+  snack: string;
+}
+
+export interface MonthPlan {
+  year: number;
+  month: number;
+  days: MonthDayMeal[];
+}
+
+export function generateMonthlyPlan(months: number): MonthPlan | null {
+  const stage = getStage(months);
+  if (!stage.hasMenu) return null;
+
+  const pool = mealPools[stage.name];
+  if (!pool) return null;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  const breakfasts = pickN(pool.breakfast, daysInMonth);
+  const lunches = pickN(pool.lunch, daysInMonth);
+  const dinners = pickN(pool.dinner, daysInMonth);
+  const snacks = pickN(pool.snack, daysInMonth);
+
+  const days: MonthDayMeal[] = Array.from({ length: daysInMonth }, (_, i) => ({
+    date: i + 1,
+    breakfast: breakfasts[i],
+    lunch: lunches[i],
+    dinner: dinners[i],
+    snack: snacks[i],
+  }));
+
+  return { year, month, days };
 }
