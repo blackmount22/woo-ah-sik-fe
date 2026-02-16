@@ -13,10 +13,16 @@ import {
   generateWeeklyPlan,
   generateMonthlyPlan,
   calcFormulaAmount,
+  groupChildrenByStage,
+  generateWeeklyPlanFromPool,
+  generateMonthlyPlanFromPool,
+  mergeWeeklyPlanForChild,
+  mergeMonthlyPlanForChild,
   type DayMeal,
   type MonthPlan,
   type Stage,
   type FormulaAmount,
+  type ChildInfo,
 } from "@/lib/mealPlan";
 
 const AD_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "";
@@ -28,6 +34,12 @@ interface BirthDate {
   day: string;
 }
 
+interface UnifiedGroup {
+  baseStageName: string;
+  groupSize: number;
+  childLabels: string[];
+}
+
 interface ChildPlan {
   label: string;
   months: number;
@@ -36,6 +48,7 @@ interface ChildPlan {
   monthlyPlan: MonthPlan | null;
   weightKg?: number;
   formula?: FormulaAmount;
+  unifiedGroup?: UnifiedGroup;
 }
 
 const childLabels = ["첫째 아이", "둘째 아이", "셋째 아이", "넷째 아이"];
@@ -140,31 +153,99 @@ export default function Home() {
     if (!isFormComplete) return;
 
     const selected = birthDates.slice(0, childCount);
-    const generated = selected.map((d, i) => {
+
+    // 1. 모든 아이의 월령/단계 계산
+    const allChildren = selected.map((d, i) => {
       const months = calcMonths(Number(d.year), Number(d.month), Number(d.day));
       const stage = getStage(months);
-      const weeklyPlan = generateWeeklyPlan(months);
-      const monthlyPlan = generateMonthlyPlan(months);
-
-      const plan: ChildPlan = {
-        label: childLabels[i],
-        months,
-        stage,
-        weeklyPlan,
-        monthlyPlan,
-      };
-
-      // 분유기 아기면 분유량 계산 결과 포함
-      if (!stage.hasMenu && weights[i]) {
-        const weightKg = Number(weights[i]);
-        plan.weightKg = weightKg;
-        plan.formula = calcFormulaAmount(months, weightKg);
-      }
-
-      return plan;
+      return { index: i, label: childLabels[i], months, stage };
     });
 
-    setPlans(generated);
+    // 2. 메뉴 아이 vs 분유기 아이 분리
+    const menuChildren: ChildInfo[] = [];
+    const formulaResults: ChildPlan[] = [];
+
+    for (const child of allChildren) {
+      if (child.stage.hasMenu) {
+        menuChildren.push({
+          index: child.index,
+          label: child.label,
+          months: child.months,
+          stageName: child.stage.name,
+        });
+      } else {
+        // 분유기 아이: 기존 로직 유지
+        const plan: ChildPlan = {
+          label: child.label,
+          months: child.months,
+          stage: child.stage,
+          weeklyPlan: [],
+          monthlyPlan: null,
+        };
+        if (weights[child.index]) {
+          const weightKg = Number(weights[child.index]);
+          plan.weightKg = weightKg;
+          plan.formula = calcFormulaAmount(child.months, weightKg);
+        }
+        formulaResults.push(plan);
+      }
+    }
+
+    // 3. 호환 그룹 생성
+    const groups = groupChildrenByStage(menuChildren);
+
+    // 4. 그룹별 식단 생성
+    const menuResults: ChildPlan[] = [];
+
+    for (const group of groups) {
+      if (group.children.length === 1) {
+        // 단독 그룹: 기존처럼 독립 생성
+        const child = group.children[0];
+        const stage = getStage(child.months);
+        menuResults.push({
+          label: child.label,
+          months: child.months,
+          stage,
+          weeklyPlan: generateWeeklyPlan(child.months),
+          monthlyPlan: generateMonthlyPlan(child.months),
+        });
+      } else {
+        // 통합 그룹: base pool에서 공유 식단 생성
+        const baseStageName = group.baseStageName;
+        const sharedWeekly = generateWeeklyPlanFromPool(baseStageName);
+        const sharedMonthly = generateMonthlyPlanFromPool(baseStageName);
+
+        const unifiedGroup: UnifiedGroup = {
+          baseStageName,
+          groupSize: group.children.length,
+          childLabels: group.children.map((c) => c.label),
+        };
+
+        for (const child of group.children) {
+          const stage = getStage(child.months);
+          const weeklyPlan = mergeWeeklyPlanForChild(sharedWeekly, child.stageName);
+          const monthlyPlan = sharedMonthly
+            ? mergeMonthlyPlanForChild(sharedMonthly, child.stageName)
+            : null;
+
+          menuResults.push({
+            label: child.label,
+            months: child.months,
+            stage,
+            weeklyPlan,
+            monthlyPlan,
+            unifiedGroup,
+          });
+        }
+      }
+    }
+
+    // 5. 원래 순서대로 정렬 (index 기준)
+    const allResults = [...formulaResults, ...menuResults];
+    const indexMap = new Map(allChildren.map((c) => [c.label, c.index]));
+    allResults.sort((a, b) => (indexMap.get(a.label) ?? 0) - (indexMap.get(b.label) ?? 0));
+
+    setPlans(allResults);
   };
 
   const handleReset = () => {
@@ -210,6 +291,7 @@ export default function Home() {
                 stage={plan.stage}
                 weeklyPlan={plan.weeklyPlan}
                 monthlyPlan={plan.monthlyPlan}
+                unifiedGroup={plan.unifiedGroup}
               />
             )
           )}

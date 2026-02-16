@@ -554,3 +554,157 @@ export function generateMonthlyPlan(months: number): MonthPlan | null {
 
   return { year, month, days };
 }
+
+// ── 통합 식단 ──
+
+// 단계 순서 매핑
+const STAGE_ORDER: Record<string, number> = {
+  "모유/분유기": 0,
+  "초기 이유식": 1,
+  "중기 이유식": 2,
+  "후기 이유식": 3,
+  "완료기 이유식": 4,
+  "유아식": 5,
+  "일반 유아식": 6,
+};
+
+export function getStageOrder(stageName: string): number {
+  return STAGE_ORDER[stageName] ?? -1;
+}
+
+// 아이 정보 인터페이스
+export interface ChildInfo {
+  index: number;
+  label: string;
+  months: number;
+  stageName: string;
+}
+
+// 호환 그룹
+export interface StageGroup {
+  children: ChildInfo[];
+  baseStageName: string; // 그룹 내 가장 낮은(어린) 단계
+}
+
+// 인접 단계(±1)만 통합, greedy 방식
+export function groupChildrenByStage(children: ChildInfo[]): StageGroup[] {
+  if (children.length === 0) return [];
+
+  // 단계 순서로 정렬
+  const sorted = [...children].sort(
+    (a, b) => getStageOrder(a.stageName) - getStageOrder(b.stageName)
+  );
+
+  const groups: StageGroup[] = [];
+  let current: StageGroup = {
+    children: [sorted[0]],
+    baseStageName: sorted[0].stageName,
+  };
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prevOrder = getStageOrder(current.baseStageName);
+    const curOrder = getStageOrder(sorted[i].stageName);
+    // 그룹 내 최소(base)와의 차이가 1 이하면 통합
+    if (curOrder - prevOrder <= 1) {
+      current.children.push(sorted[i]);
+    } else {
+      groups.push(current);
+      current = {
+        children: [sorted[i]],
+        baseStageName: sorted[i].stageName,
+      };
+    }
+  }
+  groups.push(current);
+
+  return groups;
+}
+
+// 지정 단계 pool에서 주간 식단 생성
+export function generateWeeklyPlanFromPool(stageName: string): DayMeal[] {
+  const pool = mealPools[stageName];
+  if (!pool) return [];
+
+  const breakfasts = pickSeven(pool.breakfast);
+  const lunches = pickSeven(pool.lunch);
+  const dinners = pickSeven(pool.dinner);
+  const snacks = pickSeven(pool.snack);
+
+  return dayNames.map((day, i) => ({
+    day,
+    breakfast: breakfasts[i],
+    lunch: lunches[i],
+    dinner: dinners[i],
+    snack: snacks[i],
+  }));
+}
+
+// 지정 단계 pool에서 월간 식단 생성
+export function generateMonthlyPlanFromPool(stageName: string): MonthPlan | null {
+  const pool = mealPools[stageName];
+  if (!pool) return null;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  const breakfasts = pickN(pool.breakfast, daysInMonth);
+  const lunches = pickN(pool.lunch, daysInMonth);
+  const dinners = pickN(pool.dinner, daysInMonth);
+  const snacks = pickN(pool.snack, daysInMonth);
+
+  const days: MonthDayMeal[] = Array.from({ length: daysInMonth }, (_, i) => ({
+    date: i + 1,
+    breakfast: breakfasts[i],
+    lunch: lunches[i],
+    dinner: dinners[i],
+    snack: snacks[i],
+  }));
+
+  return { year, month, days };
+}
+
+// 공유 식단에서 아이 자신의 단계에 맞게 보충 (주간)
+// base pool에 없는 끼니(예: 초기는 dinner/snack 없음)는 아이 자체 pool에서 생성
+export function mergeWeeklyPlanForChild(
+  shared: DayMeal[],
+  childStageName: string
+): DayMeal[] {
+  const childPool = mealPools[childStageName];
+  if (!childPool) return shared;
+
+  return shared.map((day) => {
+    const merged = { ...day };
+    // 공유 식단에서 빈 끼니를 아이 자체 pool에서 보충
+    if (!merged.dinner && childPool.dinner.length > 0) {
+      merged.dinner = pickN(childPool.dinner, 1)[0];
+    }
+    if (!merged.snack && childPool.snack.length > 0) {
+      merged.snack = pickN(childPool.snack, 1)[0];
+    }
+    return merged;
+  });
+}
+
+// 공유 식단에서 아이 자신의 단계에 맞게 보충 (월간)
+export function mergeMonthlyPlanForChild(
+  shared: MonthPlan,
+  childStageName: string
+): MonthPlan {
+  const childPool = mealPools[childStageName];
+  if (!childPool) return shared;
+
+  const days = shared.days.map((day) => {
+    const merged = { ...day };
+    if (!merged.dinner && childPool.dinner.length > 0) {
+      merged.dinner = pickN(childPool.dinner, 1)[0];
+    }
+    if (!merged.snack && childPool.snack.length > 0) {
+      merged.snack = pickN(childPool.snack, 1)[0];
+    }
+    return merged;
+  });
+
+  return { ...shared, days };
+}

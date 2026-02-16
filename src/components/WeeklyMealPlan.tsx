@@ -8,12 +8,19 @@ import { getSeasonalMatch } from "@/lib/seasonal";
 import { getAllergenMatches } from "@/lib/allergens";
 import RecipeModal from "./RecipeModal";
 
+interface UnifiedGroup {
+  baseStageName: string;
+  groupSize: number;
+  childLabels: string[];
+}
+
 interface WeeklyMealPlanProps {
   childLabel: string;
   months: number;
   stage: Stage;
   weeklyPlan: DayMeal[];
   monthlyPlan: MonthPlan | null;
+  unifiedGroup?: UnifiedGroup;
 }
 
 type ViewMode = "weekly" | "monthly";
@@ -73,6 +80,7 @@ export default function WeeklyMealPlan({
   stage,
   weeklyPlan,
   monthlyPlan,
+  unifiedGroup,
 }: WeeklyMealPlanProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("weekly");
   const [selectedDate, setSelectedDate] = useState<number>(
@@ -126,9 +134,21 @@ export default function WeeklyMealPlan({
         <h2 className="text-xl font-bold text-text">
           {childLabel} — {months}개월
         </h2>
-        <span className="inline-block mt-1 px-3 py-1 rounded-full bg-primary text-white text-xs font-semibold">
-          {stage.name}
-        </span>
+        <div className="flex items-center justify-center gap-2 mt-1">
+          <span className="inline-block px-3 py-1 rounded-full bg-primary text-white text-xs font-semibold">
+            {stage.name}
+          </span>
+          {unifiedGroup && (
+            <span className="inline-block px-3 py-1 rounded-full bg-accent text-white text-xs font-semibold">
+              통합 식단
+            </span>
+          )}
+        </div>
+        {unifiedGroup && (
+          <p className="mt-1 text-xs text-accent">
+            {unifiedGroup.baseStageName} 기준 · {unifiedGroup.childLabels.join(", ")}
+          </p>
+        )}
         <p className="mt-2 text-sm text-text-light">
           {stage.description} ({stage.mealsPerDay})
         </p>
