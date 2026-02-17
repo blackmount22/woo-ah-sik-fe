@@ -49,6 +49,7 @@ interface ChildPlan {
   weightKg?: number;
   formula?: FormulaAmount;
   unifiedGroup?: UnifiedGroup;
+  combinedChildren?: { label: string; months: number }[];
 }
 
 const childLabels = ["첫째 아이", "둘째 아이", "셋째 아이", "넷째 아이"];
@@ -221,29 +222,58 @@ export default function Home() {
           childLabels: group.children.map((c) => c.label),
         };
 
+        // 같은 단계 아이들끼리 서브그룹화
+        const byStage = new Map<string, ChildInfo[]>();
         for (const child of group.children) {
-          const stage = getStage(child.months);
-          const weeklyPlan = mergeWeeklyPlanForChild(sharedWeekly, child.stageName);
+          const arr = byStage.get(child.stageName) || [];
+          arr.push(child);
+          byStage.set(child.stageName, arr);
+        }
+
+        for (const [stageName, stageChildren] of byStage) {
+          const stage = getStage(stageChildren[0].months);
+          const weeklyPlan = mergeWeeklyPlanForChild(sharedWeekly, stageName);
           const monthlyPlan = sharedMonthly
-            ? mergeMonthlyPlanForChild(sharedMonthly, child.stageName)
+            ? mergeMonthlyPlanForChild(sharedMonthly, stageName)
             : null;
 
-          menuResults.push({
-            label: child.label,
-            months: child.months,
-            stage,
-            weeklyPlan,
-            monthlyPlan,
-            unifiedGroup,
-          });
+          if (stageChildren.length === 1) {
+            // 단독 단계: 개별 카드
+            menuResults.push({
+              label: stageChildren[0].label,
+              months: stageChildren[0].months,
+              stage,
+              weeklyPlan,
+              monthlyPlan,
+              unifiedGroup,
+            });
+          } else {
+            // 같은 단계 아이들: 하나의 통합 카드로 합침
+            menuResults.push({
+              label: stageChildren.map((c) => c.label).join(" · "),
+              months: stageChildren[0].months,
+              stage,
+              weeklyPlan,
+              monthlyPlan,
+              unifiedGroup,
+              combinedChildren: stageChildren.map((c) => ({
+                label: c.label,
+                months: c.months,
+              })),
+            });
+          }
         }
       }
     }
 
-    // 5. 원래 순서대로 정렬 (index 기준)
+    // 5. 원래 순서대로 정렬 (index 기준, 통합 카드는 첫 아이 기준)
     const allResults = [...formulaResults, ...menuResults];
     const indexMap = new Map(allChildren.map((c) => [c.label, c.index]));
-    allResults.sort((a, b) => (indexMap.get(a.label) ?? 0) - (indexMap.get(b.label) ?? 0));
+    const getMinIndex = (plan: ChildPlan) =>
+      plan.combinedChildren
+        ? Math.min(...plan.combinedChildren.map((c) => indexMap.get(c.label) ?? 0))
+        : (indexMap.get(plan.label) ?? 0);
+    allResults.sort((a, b) => getMinIndex(a) - getMinIndex(b));
 
     setPlans(allResults);
   };
@@ -292,6 +322,7 @@ export default function Home() {
                 weeklyPlan={plan.weeklyPlan}
                 monthlyPlan={plan.monthlyPlan}
                 unifiedGroup={plan.unifiedGroup}
+                combinedChildren={plan.combinedChildren}
               />
             )
           )}

@@ -21,6 +21,7 @@ interface WeeklyMealPlanProps {
   weeklyPlan: DayMeal[];
   monthlyPlan: MonthPlan | null;
   unifiedGroup?: UnifiedGroup;
+  combinedChildren?: { label: string; months: number }[];
 }
 
 type ViewMode = "weekly" | "monthly";
@@ -81,6 +82,7 @@ export default function WeeklyMealPlan({
   weeklyPlan,
   monthlyPlan,
   unifiedGroup,
+  combinedChildren,
 }: WeeklyMealPlanProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("weekly");
   const [selectedDate, setSelectedDate] = useState<number>(
@@ -131,20 +133,31 @@ export default function WeeklyMealPlan({
     <div className="w-full">
       {/* 헤더 */}
       <div className="text-center mb-5">
-        <h2 className="text-xl font-bold text-text">
-          {childLabel} — {months}개월
-        </h2>
+        {combinedChildren ? (
+          <>
+            <h2 className="text-xl font-bold text-text">
+              {combinedChildren.map((c) => c.label).join(" · ")}
+            </h2>
+            <p className="text-sm text-text-light mt-0.5">
+              {combinedChildren.map((c) => `${c.months}개월`).join(" · ")}
+            </p>
+          </>
+        ) : (
+          <h2 className="text-xl font-bold text-text">
+            {childLabel} — {months}개월
+          </h2>
+        )}
         <div className="flex items-center justify-center gap-2 mt-1">
           <span className="inline-block px-3 py-1 rounded-full bg-primary text-white text-xs font-semibold">
             {stage.name}
           </span>
-          {unifiedGroup && (
+          {combinedChildren && unifiedGroup && (
             <span className="inline-block px-3 py-1 rounded-full bg-accent text-white text-xs font-semibold">
               통합 식단
             </span>
           )}
         </div>
-        {unifiedGroup && (
+        {combinedChildren && unifiedGroup && (
           <p className="mt-1 text-xs text-accent">
             {unifiedGroup.baseStageName} 기준 · {unifiedGroup.childLabels.join(", ")}
           </p>
@@ -153,6 +166,13 @@ export default function WeeklyMealPlan({
           {stage.description} ({stage.mealsPerDay})
         </p>
       </div>
+
+      {/* 통합 식단 안내 */}
+      {stage.hasMenu && combinedChildren && unifiedGroup && (
+        <p className="text-[11px] text-accent text-center mb-2">
+          * 통합 식단 — {unifiedGroup.baseStageName} 기준으로 {unifiedGroup.childLabels.join(", ")}의 식단을 통합하여 제공합니다.
+        </p>
+      )}
 
       {/* 알레르기 유의 안내 */}
       {stage.hasMenu && (
