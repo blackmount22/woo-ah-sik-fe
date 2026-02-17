@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://wooahsik.com"),
   title: "우아식 - 우리아이식단",
   description: "우리 아이의 건강한 식단을 관리해보세요",
+  other: {
+    "google-adsense-account": "ca-pub-6924139569926505",
+  },
   openGraph: {
     title: "우아식 - 우리아이식단",
     description: "우리 아이의 건강한 식단을 관리해보세요",
@@ -45,7 +48,7 @@ export default function RootLayout({
         {children}
         <Script
           async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6924139569926505"
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />

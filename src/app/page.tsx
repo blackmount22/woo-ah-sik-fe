@@ -25,8 +25,8 @@ import {
   type ChildInfo,
 } from "@/lib/mealPlan";
 
-const AD_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "";
-const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT ?? "";
+const AD_CLIENT = "ca-pub-6924139569926505";
+const AD_SLOT = "6498299319";
 
 interface BirthDate {
   year: string;
