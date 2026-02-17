@@ -290,7 +290,7 @@ export default function Home() {
   // 식단표 결과 화면
   if (plans) {
     return (
-      <div className="min-h-screen flex flex-col items-center px-4 py-8 pb-20 sm:py-16">
+      <div className="min-h-screen flex flex-col items-center px-4 py-8 pb-28 sm:py-16 sm:pb-28">
         <main className="w-full max-w-md flex flex-col items-center gap-10">
           {/* 로고 */}
           <div className="text-center">
@@ -346,7 +346,7 @@ export default function Home() {
 
   // 입력 폼 화면
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-8 pb-20 sm:py-16">
+    <div className="min-h-screen flex flex-col items-center px-4 py-8 pb-28 sm:py-16 sm:pb-28">
       <main className="w-full max-w-md flex flex-col items-center gap-8">
         {/* 로고 / 타이틀 */}
         <div className="text-center">

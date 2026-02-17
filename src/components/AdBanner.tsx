@@ -47,8 +47,8 @@ export default function AdBanner({ adSlot, adClient }: AdBannerProps) {
   }, []);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border">
-      <div className="max-w-md mx-auto">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border shadow-[0_-2px_8px_rgba(0,0,0,0.05)]">
+      <div className="max-w-md mx-auto overflow-hidden">
         <ins
           ref={adRef}
           className="adsbygoogle"
