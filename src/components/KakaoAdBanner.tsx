@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 export default function KakaoAdBanner() {
-  const adRef = useRef<HTMLInsElement>(null);
+  const adRef = useRef<HTMLElement>(null);
   const initialized = useRef(false);
 
   useEffect(() => {
