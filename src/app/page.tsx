@@ -6,7 +6,7 @@ import BirthDateInput from "@/components/BirthDateInput";
 import WeightInput from "@/components/WeightInput";
 import WeeklyMealPlan from "@/components/WeeklyMealPlan";
 import FormulaResult from "@/components/FormulaResult";
-import AdBanner from "@/components/AdBanner";
+import KakaoAdBanner from "@/components/KakaoAdBanner";
 import {
   calcMonths,
   getStage,
@@ -24,9 +24,6 @@ import {
   type FormulaAmount,
   type ChildInfo,
 } from "@/lib/mealPlan";
-
-const AD_CLIENT = "ca-pub-6924139569926505";
-const AD_SLOT = "6498299319";
 
 interface BirthDate {
   year: string;
@@ -290,7 +287,7 @@ export default function Home() {
   // 식단표 결과 화면
   if (plans) {
     return (
-      <div className="min-h-screen flex flex-col items-center px-4 py-8 pb-28 sm:py-16 sm:pb-28">
+      <div className="min-h-screen flex flex-col items-center px-4 py-8 sm:py-16">
         <main className="w-full max-w-md flex flex-col items-center gap-10">
           {/* 로고 */}
           <div className="text-center">
@@ -335,18 +332,16 @@ export default function Home() {
           >
             다시 선택하기
           </button>
-        </main>
 
-        {AD_CLIENT && AD_SLOT && (
-          <AdBanner adClient={AD_CLIENT} adSlot={AD_SLOT} />
-        )}
+          <KakaoAdBanner />
+        </main>
       </div>
     );
   }
 
   // 입력 폼 화면
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-8 pb-28 sm:py-16 sm:pb-28">
+    <div className="min-h-screen flex flex-col items-center px-4 py-8 sm:py-16">
       <main className="w-full max-w-md flex flex-col items-center gap-8">
         {/* 로고 / 타이틀 */}
         <div className="text-center">
@@ -406,11 +401,9 @@ export default function Home() {
         >
           시작하기
         </button>
-      </main>
 
-      {AD_CLIENT && AD_SLOT && (
-        <AdBanner adClient={AD_CLIENT} adSlot={AD_SLOT} />
-      )}
+        <KakaoAdBanner />
+      </main>
     </div>
   );
 }
