@@ -604,8 +604,8 @@ export function groupChildrenByStage(children: ChildInfo[]): StageGroup[] {
   for (let i = 1; i < sorted.length; i++) {
     const prevOrder = getStageOrder(current.baseStageName);
     const curOrder = getStageOrder(sorted[i].stageName);
-    // 그룹 내 최소(base)와의 차이가 1 이하면 통합
-    if (curOrder - prevOrder <= 1) {
+    // 그룹 내 최소(base)와의 차이가 2 이하면 통합
+    if (curOrder - prevOrder <= 2) {
       current.children.push(sorted[i]);
     } else {
       groups.push(current);
