@@ -18,6 +18,8 @@ import {
   generateMonthlyPlanFromPool,
   mergeWeeklyPlanForChild,
   mergeMonthlyPlanForChild,
+  getCanonicalStageName,
+  getStageOrder,
   type DayMeal,
   type MonthPlan,
   type Stage,
@@ -219,19 +221,25 @@ export default function Home() {
           childLabels: group.children.map((c) => c.label),
         };
 
-        // 같은 단계 아이들끼리 서브그룹화
+        // canonical 단계명 기준으로 서브그룹화
+        // (예: 유아식 + 일반 유아식은 동일 풀이므로 하나의 카드로 통합)
         const byStage = new Map<string, ChildInfo[]>();
         for (const child of group.children) {
-          const arr = byStage.get(child.stageName) || [];
+          const key = getCanonicalStageName(child.stageName);
+          const arr = byStage.get(key) || [];
           arr.push(child);
-          byStage.set(child.stageName, arr);
+          byStage.set(key, arr);
         }
 
-        for (const [stageName, stageChildren] of byStage) {
-          const stage = getStage(stageChildren[0].months);
-          const weeklyPlan = mergeWeeklyPlanForChild(sharedWeekly, stageName);
+        for (const [canonicalStage, stageChildren] of byStage) {
+          // 표시용 stage: 그룹 내 가장 낮은 단계 기준
+          const baseChild = stageChildren.reduce((min, c) =>
+            getStageOrder(c.stageName) <= getStageOrder(min.stageName) ? c : min
+          );
+          const stage = getStage(baseChild.months);
+          const weeklyPlan = mergeWeeklyPlanForChild(sharedWeekly, canonicalStage);
           const monthlyPlan = sharedMonthly
-            ? mergeMonthlyPlanForChild(sharedMonthly, stageName)
+            ? mergeMonthlyPlanForChild(sharedMonthly, canonicalStage)
             : null;
 
           if (stageChildren.length === 1) {
@@ -245,10 +253,10 @@ export default function Home() {
               unifiedGroup,
             });
           } else {
-            // 같은 단계 아이들: 하나의 통합 카드로 합침
+            // 같은 (canonical) 단계 아이들: 하나의 통합 카드로 합침
             menuResults.push({
               label: stageChildren.map((c) => c.label).join(" · "),
-              months: stageChildren[0].months,
+              months: baseChild.months,
               stage,
               weeklyPlan,
               monthlyPlan,

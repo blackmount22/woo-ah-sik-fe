@@ -469,15 +469,113 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-// 풀에서 n개 겹치지 않게 선택
-function pickN(pool: string[], n: number): string[] {
-  if (pool.length === 0) return Array(n).fill("");
-  const shuffled = shuffle(pool);
-  return Array.from({ length: n }, (_, i) => shuffled[i % shuffled.length]);
+// ── 영양 카테고리 ──
+
+// 메뉴명에서 주요 단백질 카테고리 추출
+function getProteinCategory(menu: string): string {
+  if (menu.includes("소고기")) return "소고기";
+  if (menu.includes("닭고기") || menu.includes("닭볶음탕") || menu.includes("닭볶음")) return "닭고기";
+  if (menu.includes("연어") || menu.includes("대구") || menu.includes("갈치") || menu.includes("생선")) return "생선";
+  if (menu.includes("돼지고기") || menu.includes("제육")) return "돼지고기";
+  if (menu.includes("두부")) return "두부";
+  if (menu.includes("계란") || menu.includes("달걀")) return "계란";
+  return "기타";
 }
 
-function pickSeven(pool: string[]): string[] {
-  return pickN(pool, 7);
+// 단백질 카테고리를 순환하며 n개 균형 선택
+// 예: [소고기1, 닭고기1, 생선1, 소고기2, 닭고기2, ...]
+function pickBalancedN(pool: string[], n: number): string[] {
+  if (pool.length === 0) return Array(n).fill("");
+  if (n <= 0) return [];
+
+  // 카테고리별 그룹화 (셔플 후 무작위성 유지)
+  const grouped = new Map<string, string[]>();
+  for (const menu of shuffle(pool)) {
+    const cat = getProteinCategory(menu);
+    if (!grouped.has(cat)) grouped.set(cat, []);
+    grouped.get(cat)!.push(menu);
+  }
+
+  // 카테고리 순환으로 인터리브된 기본 시퀀스 생성
+  const queues = [...grouped.values()];
+  const baseSeq: string[] = [];
+  let round = 0;
+  let anyLeft = true;
+  while (anyLeft) {
+    anyLeft = false;
+    for (const q of queues) {
+      if (round < q.length) {
+        baseSeq.push(q[round]);
+        anyLeft = true;
+      }
+    }
+    round++;
+  }
+
+  // n개 선택 (baseSeq 순환)
+  return Array.from({ length: n }, (_, i) => baseSeq[i % baseSeq.length]);
+}
+
+// 같은 날 끼니 간 단백질 다양성 확보 (greedy 재배열)
+function rearrangeForDailyVariety(
+  breakfasts: string[],
+  lunches: string[],
+  dinners: string[]
+): [string[], string[], string[]] {
+  const n = breakfasts.length;
+  const ls = [...lunches];
+  const ds = [...dinners];
+  const bCats = breakfasts.map(getProteinCategory);
+
+  // 점심: 같은 날 아침과 다른 단백질이 오도록 재배열
+  for (let i = 0; i < n; i++) {
+    if (getProteinCategory(ls[i]) === bCats[i]) {
+      for (let j = i + 1; j < n; j++) {
+        if (getProteinCategory(ls[j]) !== bCats[i]) {
+          [ls[i], ls[j]] = [ls[j], ls[i]];
+          break;
+        }
+      }
+    }
+  }
+
+  // 저녁: 같은 날 아침·점심과 다른 단백질이 오도록 재배열
+  const hasDinner = ds.some((d) => d !== "");
+  if (hasDinner) {
+    for (let i = 0; i < n; i++) {
+      if (!ds[i]) continue;
+      const lCat = getProteinCategory(ls[i]);
+      if (getProteinCategory(ds[i]) === bCats[i] || getProteinCategory(ds[i]) === lCat) {
+        for (let j = i + 1; j < n; j++) {
+          if (!ds[j]) continue;
+          const newCat = getProteinCategory(ds[j]);
+          if (newCat !== bCats[i] && newCat !== lCat) {
+            [ds[i], ds[j]] = [ds[j], ds[i]];
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return [breakfasts, ls, ds];
+}
+
+// ── 단계 풀 표준화 (동일 메뉴 단계 통합) ──
+
+// 메뉴 풀이 동일한 단계를 하나로 묶는 표준 매핑
+// (일반 유아식은 유아식과 동일한 메뉴 풀을 사용)
+export const STAGE_CANONICAL: Record<string, string> = {
+  "일반 유아식": "유아식",
+};
+
+export function getCanonicalStageName(stageName: string): string {
+  return STAGE_CANONICAL[stageName] ?? stageName;
+}
+
+// 풀에서 n개 겹치지 않게 선택 (하위 호환 유지)
+function pickN(pool: string[], n: number): string[] {
+  return pickBalancedN(pool, n);
 }
 
 export interface DayMeal {
@@ -494,13 +592,15 @@ export function generateWeeklyPlan(months: number): DayMeal[] {
   const stage = getStage(months);
   if (!stage.hasMenu) return [];
 
-  const pool = mealPools[stage.name];
+  const pool = mealPools[getCanonicalStageName(stage.name)] ?? mealPools[stage.name];
   if (!pool) return [];
 
-  const breakfasts = pickSeven(pool.breakfast);
-  const lunches = pickSeven(pool.lunch);
-  const dinners = pickSeven(pool.dinner);
-  const snacks = pickSeven(pool.snack);
+  const breakfasts = pickBalancedN(pool.breakfast, 7);
+  const lunchesRaw = pickBalancedN(pool.lunch, 7);
+  const dinnersRaw = pool.dinner.length > 0 ? pickBalancedN(pool.dinner, 7) : Array(7).fill("");
+  const snacks = pool.snack.length > 0 ? pickBalancedN(pool.snack, 7) : Array(7).fill("");
+
+  const [, lunches, dinners] = rearrangeForDailyVariety(breakfasts, lunchesRaw, dinnersRaw);
 
   return dayNames.map((day, i) => ({
     day,
@@ -531,7 +631,7 @@ export function generateMonthlyPlan(months: number): MonthPlan | null {
   const stage = getStage(months);
   if (!stage.hasMenu) return null;
 
-  const pool = mealPools[stage.name];
+  const pool = mealPools[getCanonicalStageName(stage.name)] ?? mealPools[stage.name];
   if (!pool) return null;
 
   const now = new Date();
@@ -539,10 +639,12 @@ export function generateMonthlyPlan(months: number): MonthPlan | null {
   const month = now.getMonth() + 1;
   const daysInMonth = new Date(year, month, 0).getDate();
 
-  const breakfasts = pickN(pool.breakfast, daysInMonth);
-  const lunches = pickN(pool.lunch, daysInMonth);
-  const dinners = pickN(pool.dinner, daysInMonth);
-  const snacks = pickN(pool.snack, daysInMonth);
+  const breakfasts = pickBalancedN(pool.breakfast, daysInMonth);
+  const lunchesRaw = pickBalancedN(pool.lunch, daysInMonth);
+  const dinnersRaw = pool.dinner.length > 0 ? pickBalancedN(pool.dinner, daysInMonth) : Array(daysInMonth).fill("");
+  const snacks = pool.snack.length > 0 ? pickBalancedN(pool.snack, daysInMonth) : Array(daysInMonth).fill("");
+
+  const [, lunches, dinners] = rearrangeForDailyVariety(breakfasts, lunchesRaw, dinnersRaw);
 
   const days: MonthDayMeal[] = Array.from({ length: daysInMonth }, (_, i) => ({
     date: i + 1,
@@ -622,13 +724,16 @@ export function groupChildrenByStage(children: ChildInfo[]): StageGroup[] {
 
 // 지정 단계 pool에서 주간 식단 생성
 export function generateWeeklyPlanFromPool(stageName: string): DayMeal[] {
-  const pool = mealPools[stageName];
+  const canonicalName = getCanonicalStageName(stageName);
+  const pool = mealPools[canonicalName] ?? mealPools[stageName];
   if (!pool) return [];
 
-  const breakfasts = pickSeven(pool.breakfast);
-  const lunches = pickSeven(pool.lunch);
-  const dinners = pickSeven(pool.dinner);
-  const snacks = pickSeven(pool.snack);
+  const breakfasts = pickBalancedN(pool.breakfast, 7);
+  const lunchesRaw = pickBalancedN(pool.lunch, 7);
+  const dinnersRaw = pool.dinner.length > 0 ? pickBalancedN(pool.dinner, 7) : Array(7).fill("");
+  const snacks = pool.snack.length > 0 ? pickBalancedN(pool.snack, 7) : Array(7).fill("");
+
+  const [, lunches, dinners] = rearrangeForDailyVariety(breakfasts, lunchesRaw, dinnersRaw);
 
   return dayNames.map((day, i) => ({
     day,
@@ -641,7 +746,8 @@ export function generateWeeklyPlanFromPool(stageName: string): DayMeal[] {
 
 // 지정 단계 pool에서 월간 식단 생성
 export function generateMonthlyPlanFromPool(stageName: string): MonthPlan | null {
-  const pool = mealPools[stageName];
+  const canonicalName = getCanonicalStageName(stageName);
+  const pool = mealPools[canonicalName] ?? mealPools[stageName];
   if (!pool) return null;
 
   const now = new Date();
@@ -649,10 +755,12 @@ export function generateMonthlyPlanFromPool(stageName: string): MonthPlan | null
   const month = now.getMonth() + 1;
   const daysInMonth = new Date(year, month, 0).getDate();
 
-  const breakfasts = pickN(pool.breakfast, daysInMonth);
-  const lunches = pickN(pool.lunch, daysInMonth);
-  const dinners = pickN(pool.dinner, daysInMonth);
-  const snacks = pickN(pool.snack, daysInMonth);
+  const breakfasts = pickBalancedN(pool.breakfast, daysInMonth);
+  const lunchesRaw = pickBalancedN(pool.lunch, daysInMonth);
+  const dinnersRaw = pool.dinner.length > 0 ? pickBalancedN(pool.dinner, daysInMonth) : Array(daysInMonth).fill("");
+  const snacks = pool.snack.length > 0 ? pickBalancedN(pool.snack, daysInMonth) : Array(daysInMonth).fill("");
+
+  const [, lunches, dinners] = rearrangeForDailyVariety(breakfasts, lunchesRaw, dinnersRaw);
 
   const days: MonthDayMeal[] = Array.from({ length: daysInMonth }, (_, i) => ({
     date: i + 1,
