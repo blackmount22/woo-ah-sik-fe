@@ -16,6 +16,9 @@ import {
   groupChildrenByStage,
   generateWeeklyPlanFromPool,
   generateMonthlyPlanFromPool,
+  generateWeeklyPlanFromMergedPool,
+  generateMonthlyPlanFromMergedPool,
+  areMergeableStages,
   mergeWeeklyPlanForChild,
   mergeMonthlyPlanForChild,
   getCanonicalStageName,
@@ -210,10 +213,17 @@ export default function Home() {
           monthlyPlan: generateMonthlyPlan(child.months),
         });
       } else {
-        // 통합 그룹: base pool에서 공유 식단 생성
+        // 통합 그룹: 공유 식단 생성
+        // 유아식+일반유아식처럼 통합 병합 가능한 그룹은 두 풀을 합쳐 더 다양한 식단 제공
         const baseStageName = group.baseStageName;
-        const sharedWeekly = generateWeeklyPlanFromPool(baseStageName);
-        const sharedMonthly = generateMonthlyPlanFromPool(baseStageName);
+        const allStageNames = group.children.map((c) => c.stageName);
+        const useMerged = areMergeableStages(allStageNames);
+        const sharedWeekly = useMerged
+          ? generateWeeklyPlanFromMergedPool(allStageNames)
+          : generateWeeklyPlanFromPool(baseStageName);
+        const sharedMonthly = useMerged
+          ? generateMonthlyPlanFromMergedPool(allStageNames)
+          : generateMonthlyPlanFromPool(baseStageName);
 
         const unifiedGroup: UnifiedGroup = {
           baseStageName,

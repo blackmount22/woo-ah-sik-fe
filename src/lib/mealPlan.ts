@@ -391,70 +391,71 @@ const mealPools: Record<string, MealPool> = {
       "고구마맛탕",
     ],
   },
+  // 일반 유아식: 유아식과 다른 메뉴로 구성 (36개월+, 더 다양한 식재료 사용)
   "일반 유아식": {
     breakfast: [
-      "계란말이 + 밥 + 된장국",
-      "소고기볶음밥 + 미역국",
-      "주먹밥 + 소고기무국",
-      "야채죽 + 계란찜",
-      "채소볶음밥 + 달걀국",
-      "잔치국수",
-      "소고기비빔밥",
-      "김치볶음밥 + 계란후라이",
-      "감자전 + 밥 + 국",
-      "소고기덮밥",
-      "치즈밥 + 미역국",
-      "계란덮밥 + 된장국",
-      "닭고기죽",
-      "소고기김밥",
+      "참치볶음밥 + 달걀국",
+      "팬케이크 + 과일 + 우유",
+      "스크램블에그 + 토스트",
+      "고등어구이 + 밥 + 미역국",
+      "소고기뭇국 + 밥",
+      "닭갈비볶음밥",
+      "콩나물국밥",
+      "두부된장찌개 + 밥",
+      "새우볶음밥 + 달걀국",
+      "함박스테이크 + 밥 + 국",
+      "만두국",
+      "삼치구이 + 밥 + 된장국",
+      "닭고기오므라이스",
+      "현미밥 + 나물반찬 + 국",
     ],
     lunch: [
-      "소고기야채카레 + 밥",
-      "닭고기덮밥 + 배추국",
-      "소고기미역국 + 밥 + 계란말이",
-      "어묵국 + 밥 + 멸치볶음",
-      "돼지고기감자국 + 밥",
-      "소고기된장찌개 + 밥",
-      "볶음우동 + 달걀국",
-      "닭고기카레 + 밥",
-      "소고기국수",
-      "제육볶음 + 밥 + 국",
-      "생선까스 + 밥 + 국",
-      "소고기잡채밥",
-      "미트볼파스타",
-      "소고기우동",
+      "순두부찌개 + 밥",
+      "고등어조림 + 밥 + 국",
+      "닭볶음탕 + 밥",
+      "소고기뭇국 + 밥 + 나물",
+      "스파게티 + 수프",
+      "콩나물비빔밥",
+      "닭고기된장찌개 + 밥",
+      "삼치구이 + 밥 + 국",
+      "새우볶음 + 밥 + 국",
+      "닭고기치즈덮밥 + 국",
+      "소고기두부조림 + 밥 + 국",
+      "버섯소고기덮밥 + 국",
+      "참치김밥 + 국",
+      "소고기수제비국",
     ],
     dinner: [
-      "생선구이 + 밥 + 시금치나물",
-      "소고기장조림 + 밥 + 된장국",
-      "닭고기야채볶음 + 밥 + 국",
-      "두부조림 + 밥 + 미역국",
-      "소고기떡국",
-      "돼지고기간장불고기 + 밥 + 콩나물국",
-      "갈치구이 + 밥 + 무국",
-      "닭고기장조림 + 밥 + 국",
-      "소고기야채볶음 + 밥 + 국",
-      "돼지고기김치찌개 + 밥",
-      "생선조림 + 밥 + 국",
-      "소고기감자조림 + 밥 + 된장국",
-      "닭고기카레 + 밥 + 샐러드",
-      "제육볶음 + 밥 + 된장국",
+      "소고기불고기 + 밥 + 콩나물국",
+      "닭고기볶음 + 밥 + 미역국",
+      "고등어조림 + 밥 + 된장국",
+      "삼치구이 + 밥 + 미역국",
+      "소고기수제비국",
+      "새우야채볶음 + 밥 + 국",
+      "닭볶음탕 + 밥",
+      "소고기미역국 + 밥 + 나물",
+      "생선전 + 밥 + 국",
+      "두부된장찌개 + 밥",
+      "닭고기치즈구이 + 밥 + 국",
+      "소고기야채국밥",
+      "콩나물국밥",
+      "돼지고기채소볶음 + 밥 + 국",
     ],
     snack: [
-      "과일 (사과, 배, 귤)",
-      "고구마 + 우유",
-      "요거트 + 시리얼",
-      "바나나 + 치즈",
-      "떡 + 우유",
-      "찐옥수수",
-      "과일주스 + 쿠키",
-      "감자전",
-      "호떡",
-      "미니김밥",
-      "과일샐러드",
-      "두유 + 과자",
-      "치즈스틱",
-      "고구마맛탕",
+      "샌드위치 + 우유",
+      "과일 꼬치",
+      "크래커 + 치즈",
+      "단호박수프",
+      "과일요거트 파르페",
+      "고구마 라테",
+      "팬케이크 (간식)",
+      "치즈 토스트",
+      "과일 스무디",
+      "야채달걀찜",
+      "닭가슴살 볼",
+      "과일화채",
+      "고구마케이크",
+      "두유 스무디",
     ],
   },
 };
@@ -592,7 +593,7 @@ export function generateWeeklyPlan(months: number): DayMeal[] {
   const stage = getStage(months);
   if (!stage.hasMenu) return [];
 
-  const pool = mealPools[getCanonicalStageName(stage.name)] ?? mealPools[stage.name];
+  const pool = mealPools[stage.name];
   if (!pool) return [];
 
   const breakfasts = pickBalancedN(pool.breakfast, 7);
@@ -631,7 +632,7 @@ export function generateMonthlyPlan(months: number): MonthPlan | null {
   const stage = getStage(months);
   if (!stage.hasMenu) return null;
 
-  const pool = mealPools[getCanonicalStageName(stage.name)] ?? mealPools[stage.name];
+  const pool = mealPools[stage.name];
   if (!pool) return null;
 
   const now = new Date();
@@ -724,8 +725,7 @@ export function groupChildrenByStage(children: ChildInfo[]): StageGroup[] {
 
 // 지정 단계 pool에서 주간 식단 생성
 export function generateWeeklyPlanFromPool(stageName: string): DayMeal[] {
-  const canonicalName = getCanonicalStageName(stageName);
-  const pool = mealPools[canonicalName] ?? mealPools[stageName];
+  const pool = mealPools[stageName];
   if (!pool) return [];
 
   const breakfasts = pickBalancedN(pool.breakfast, 7);
@@ -746,9 +746,87 @@ export function generateWeeklyPlanFromPool(stageName: string): DayMeal[] {
 
 // 지정 단계 pool에서 월간 식단 생성
 export function generateMonthlyPlanFromPool(stageName: string): MonthPlan | null {
-  const canonicalName = getCanonicalStageName(stageName);
-  const pool = mealPools[canonicalName] ?? mealPools[stageName];
+  const pool = mealPools[stageName];
   if (!pool) return null;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  const breakfasts = pickBalancedN(pool.breakfast, daysInMonth);
+  const lunchesRaw = pickBalancedN(pool.lunch, daysInMonth);
+  const dinnersRaw = pool.dinner.length > 0 ? pickBalancedN(pool.dinner, daysInMonth) : Array(daysInMonth).fill("");
+  const snacks = pool.snack.length > 0 ? pickBalancedN(pool.snack, daysInMonth) : Array(daysInMonth).fill("");
+
+  const [, lunches, dinners] = rearrangeForDailyVariety(breakfasts, lunchesRaw, dinnersRaw);
+
+  const days: MonthDayMeal[] = Array.from({ length: daysInMonth }, (_, i) => ({
+    date: i + 1,
+    breakfast: breakfasts[i],
+    lunch: lunches[i],
+    dinner: dinners[i],
+    snack: snacks[i],
+  }));
+
+  return { year, month, days };
+}
+
+// ── 통합 병합 풀 ──
+
+// 여러 단계의 풀을 합쳐 중복 없는 통합 풀 생성
+function buildMergedPool(stageNames: string[]): MealPool {
+  const pools = stageNames
+    .map((s) => mealPools[s])
+    .filter((p): p is MealPool => !!p);
+  if (pools.length === 0) return { breakfast: [], lunch: [], dinner: [], snack: [] };
+  return {
+    breakfast: [...new Set(pools.flatMap((p) => p.breakfast))],
+    lunch: [...new Set(pools.flatMap((p) => p.lunch))],
+    dinner: [...new Set(pools.flatMap((p) => p.dinner))],
+    snack: [...new Set(pools.flatMap((p) => p.snack))],
+  };
+}
+
+// 통합 가능한 단계 그룹 정의
+// 이 그룹 내 단계들은 모든 아이가 함께 먹을 수 있으므로 풀을 병합하여 더 다양한 식단 제공
+export const MERGEABLE_STAGE_GROUPS: string[][] = [
+  ["유아식", "일반 유아식"],
+];
+
+// 주어진 단계들이 통합 병합 가능한지 확인
+export function areMergeableStages(stageNames: string[]): boolean {
+  const unique = [...new Set(stageNames)];
+  return MERGEABLE_STAGE_GROUPS.some((group) =>
+    unique.every((s) => group.includes(s))
+  );
+}
+
+// 여러 단계 병합 풀에서 주간 식단 생성
+export function generateWeeklyPlanFromMergedPool(stageNames: string[]): DayMeal[] {
+  const pool = buildMergedPool(stageNames);
+  if (pool.breakfast.length === 0) return [];
+
+  const breakfasts = pickBalancedN(pool.breakfast, 7);
+  const lunchesRaw = pickBalancedN(pool.lunch, 7);
+  const dinnersRaw = pool.dinner.length > 0 ? pickBalancedN(pool.dinner, 7) : Array(7).fill("");
+  const snacks = pool.snack.length > 0 ? pickBalancedN(pool.snack, 7) : Array(7).fill("");
+
+  const [, lunches, dinners] = rearrangeForDailyVariety(breakfasts, lunchesRaw, dinnersRaw);
+
+  return dayNames.map((day, i) => ({
+    day,
+    breakfast: breakfasts[i],
+    lunch: lunches[i],
+    dinner: dinners[i],
+    snack: snacks[i],
+  }));
+}
+
+// 여러 단계 병합 풀에서 월간 식단 생성
+export function generateMonthlyPlanFromMergedPool(stageNames: string[]): MonthPlan | null {
+  const pool = buildMergedPool(stageNames);
+  if (pool.breakfast.length === 0) return null;
 
   const now = new Date();
   const year = now.getFullYear();
