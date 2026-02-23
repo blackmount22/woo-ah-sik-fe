@@ -68,6 +68,7 @@ export default function Home() {
   const [weights, setWeights] = useState<string[]>(defaultWeights);
   const [plans, setPlans] = useState<ChildPlan[] | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [futureDateAlert, setFutureDateAlert] = useState<string | null>(null);
   const skipSave = useRef(false);
 
   // localStorage에서 복원
@@ -156,6 +157,22 @@ export default function Home() {
     if (!isFormComplete) return;
 
     const selected = birthDates.slice(0, childCount);
+
+    // 미래 날짜 검증
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (let i = 0; i < selected.length; i++) {
+      const d = selected[i];
+      const birth = new Date(Number(d.year), Number(d.month) - 1, Number(d.day));
+      if (birth > today) {
+        setFutureDateAlert(
+          childCount > 1
+            ? `${childLabels[i]}의 생년월일이 아직 지나지 않은 날짜예요.\n태어나지 않은 아이는 식단을 생성할 수 없어요.`
+            : "생년월일이 아직 지나지 않은 날짜예요.\n태어나지 않은 아이는 식단을 생성할 수 없어요."
+        );
+        return;
+      }
+    }
 
     // 1. 모든 아이의 월령/단계 계산
     const allChildren = selected.map((d, i) => {
@@ -421,6 +438,25 @@ export default function Home() {
         </button>
 
         <KakaoAdBanner />
+
+        {/* 미래 날짜 알림 모달 */}
+        {futureDateAlert && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl text-center">
+              <div className="text-4xl mb-3">🍼</div>
+              <p className="text-base text-text whitespace-pre-line leading-relaxed">
+                {futureDateAlert}
+              </p>
+              <button
+                type="button"
+                onClick={() => setFutureDateAlert(null)}
+                className="mt-5 w-full py-3 rounded-xl text-base font-bold bg-primary text-white hover:bg-primary-dark transition-all active:scale-[0.98]"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
