@@ -7,6 +7,7 @@ import WeightInput from "@/components/WeightInput";
 import WeeklyMealPlan from "@/components/WeeklyMealPlan";
 import FormulaResult from "@/components/FormulaResult";
 import KakaoAdBanner from "@/components/KakaoAdBanner";
+import InstallButton from "@/components/InstallButton";
 import {
   calcMonths,
   getStage,
@@ -332,6 +333,9 @@ export default function Home() {
             <p className="mt-1 text-sm text-text-light">
               우리아이 식단표
             </p>
+            <div className="mt-2">
+              <InstallButton />
+            </div>
           </div>
 
           {/* 자녀별 식단표 */}
@@ -384,6 +388,9 @@ export default function Home() {
             우아식
           </h1>
           <p className="mt-1 text-sm text-text-light">우리아이식단</p>
+          <div className="mt-2">
+            <InstallButton />
+          </div>
         </div>
 
         {/* 서비스 소개 */}
