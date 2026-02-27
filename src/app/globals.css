@@ -41,3 +41,39 @@ body {
 .animate-pulse-slow {
   animation: pulse-slow 2.5s ease-in-out infinite;
 }
+
+/* ── 인쇄 전용 스타일 ── */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  /* 본문 전체 숨김 */
+  body {
+    visibility: hidden;
+  }
+
+  /* 출력 모달 영역만 표시 */
+  .print-meal-modal {
+    visibility: visible !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: 99999 !important;
+  }
+
+  .print-meal-modal * {
+    visibility: visible !important;
+  }
+
+  /* 인쇄 시 숨길 요소 */
+  .no-print {
+    display: none !important;
+  }
+}

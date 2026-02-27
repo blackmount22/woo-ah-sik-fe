@@ -89,6 +89,7 @@ export default function WeeklyMealPlan({
     new Date().getDate()
   );
   const [openRecipe, setOpenRecipe] = useState<Recipe | null>(null);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   // 월간 데이터를 주 단위로 분할
   const monthWeeks = useMemo(
@@ -193,7 +194,7 @@ export default function WeeklyMealPlan({
       ) : (
         <>
           {/* 뷰 모드 토글 */}
-          <div className="flex items-center justify-center gap-2 mb-5">
+          <div className="flex items-center justify-center gap-2 mb-3">
             <button
               type="button"
               onClick={() => setViewMode("weekly")}
@@ -217,6 +218,33 @@ export default function WeeklyMealPlan({
               한 달
             </button>
           </div>
+
+          {/* 출력 버튼 — 한 달 뷰일 때만 노출 */}
+          {viewMode === "monthly" && monthlyPlan && (
+            <div className="flex justify-center mb-4">
+              <button
+                type="button"
+                onClick={() => setShowPrintModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-border text-text-light text-sm font-semibold hover:border-primary/40 hover:text-primary transition-all shadow-sm active:scale-95"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+                출력
+              </button>
+            </div>
+          )}
 
           {viewMode === "weekly" && monthlyPlan ? (
             <>
@@ -364,6 +392,18 @@ export default function WeeklyMealPlan({
         <RecipeModal
           recipe={openRecipe}
           onClose={() => setOpenRecipe(null)}
+        />
+      )}
+
+      {/* 공유 / 출력 모달 */}
+      {showPrintModal && monthlyPlan && (
+        <PrintModal
+          monthlyPlan={monthlyPlan}
+          monthWeeks={monthWeeks}
+          childLabel={childLabel}
+          stage={stage}
+          combinedChildren={combinedChildren}
+          onClose={() => setShowPrintModal(false)}
         />
       )}
     </div>
@@ -610,5 +650,419 @@ function MealCard({
         </div>
       )}
     </button>
+  );
+}
+
+// ── 공유/출력 모달 ──
+
+function buildShareText(
+  monthlyPlan: import("@/lib/mealPlan").MonthPlan,
+  title: string,
+  stage: import("@/lib/mealPlan").Stage
+): string {
+  const lines: string[] = [
+    `🍼 ${title} 이유식 식단표`,
+    `📅 ${monthlyPlan.year}년 ${monthlyPlan.month}월 · ${stage.name}`,
+    "",
+  ];
+  const wdays = ["월", "화", "수", "목", "금", "토", "일"];
+  for (const d of monthlyPlan.days) {
+    const dow = wdays[(new Date(monthlyPlan.year, monthlyPlan.month - 1, d.date).getDay() + 6) % 7];
+    const parts: string[] = [`${d.date}일(${dow})`];
+    if (d.breakfast) parts.push(`아침: ${d.breakfast}`);
+    if (d.lunch) parts.push(`점심: ${d.lunch}`);
+    if (d.dinner) parts.push(`저녁: ${d.dinner}`);
+    if (d.snack) parts.push(`간식: ${d.snack}`);
+    lines.push(parts.join(" | "));
+  }
+  lines.push("", "— 우아식 (woo-ah-sik)");
+  return lines.join("\n");
+}
+
+function PrintModal({
+  monthlyPlan,
+  monthWeeks,
+  childLabel,
+  stage,
+  combinedChildren,
+  onClose,
+}: {
+  monthlyPlan: import("@/lib/mealPlan").MonthPlan;
+  monthWeeks: (import("@/lib/mealPlan").MonthDayMeal | null)[][];
+  childLabel: string;
+  stage: import("@/lib/mealPlan").Stage;
+  combinedChildren?: { label: string; months: number }[];
+  onClose: () => void;
+}) {
+  const { year, month } = monthlyPlan;
+  const title = combinedChildren
+    ? combinedChildren.map((c) => c.label).join(" · ")
+    : childLabel;
+
+  const handleShare = async () => {
+    const text = buildShareText(monthlyPlan, title, stage);
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: `${title} ${year}년 ${month}월 식단표`,
+          text,
+        });
+      } catch {
+        // 사용자가 취소하거나 오류 발생 시 클립보드로 폴백
+        await navigator.clipboard.writeText(text);
+        alert("식단표가 클립보드에 복사되었습니다!");
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+      alert("식단표가 클립보드에 복사되었습니다!");
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const mealDotColors: Record<string, string> = {
+    breakfast: "bg-orange-400",
+    lunch: "bg-green-500",
+    dinner: "bg-red-400",
+    snack: "bg-gray-400",
+  };
+
+  return (
+    <>
+      {/* 화면 전용: 어두운 오버레이 (인쇄 시 숨김) */}
+      <div
+        className="no-print fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white w-full max-w-5xl max-h-[92vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* 모달 헤더 */}
+          <div className="shrink-0 flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+            <h2 className="text-base font-bold text-gray-800">
+              {year}년 {month}월 식단표 미리보기
+            </h2>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-600 text-sm font-semibold hover:border-primary/40 hover:text-primary transition-all"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+                공유
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-white text-sm font-semibold shadow hover:bg-primary-dark transition-all active:scale-95"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+                PDF 출력
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* 스크롤 영역 */}
+          <div className="flex-1 overflow-y-auto p-5">
+            <PrintCalendarContent
+              year={year}
+              month={month}
+              title={title}
+              stage={stage}
+              monthWeeks={monthWeeks}
+              mealDotColors={mealDotColors}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 인쇄 전용 영역 — 화면에서는 숨김, 인쇄 시 표시 */}
+      <div className="print-meal-modal" style={{ display: "none" }}>
+        <div style={{ padding: "6mm 8mm" }}>
+          <PrintCalendarContent
+            year={year}
+            month={month}
+            title={title}
+            stage={stage}
+            monthWeeks={monthWeeks}
+            mealDotColors={mealDotColors}
+          />
+        </div>
+      </div>
+    </>
+  );
+}
+
+// 달력 내용 (화면 미리보기 + 인쇄 모두 공유)
+function PrintCalendarContent({
+  year,
+  month,
+  title,
+  stage,
+  monthWeeks,
+  mealDotColors,
+}: {
+  year: number;
+  month: number;
+  title: string;
+  stage: import("@/lib/mealPlan").Stage;
+  monthWeeks: (import("@/lib/mealPlan").MonthDayMeal | null)[][];
+  mealDotColors: Record<string, string>;
+}) {
+  const wdays = ["월", "화", "수", "목", "금", "토", "일"];
+
+  return (
+    <div style={{ fontFamily: "sans-serif", color: "#1a1a1a" }}>
+      {/* 제목 */}
+      <div style={{ textAlign: "center", marginBottom: "10px" }}>
+        <h1 style={{ fontSize: "18px", fontWeight: 800, margin: 0 }}>
+          🍼 {title} 이유식 식단표
+        </h1>
+        <p style={{ fontSize: "13px", color: "#555", margin: "3px 0 0" }}>
+          {year}년 {month}월 &nbsp;·&nbsp; {stage.name} ({stage.mealsPerDay})
+        </p>
+      </div>
+
+      {/* 범례 */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "16px",
+          marginBottom: "8px",
+          fontSize: "11px",
+          color: "#555",
+        }}
+      >
+        {[
+          { label: "아침", color: "#fb923c" },
+          { label: "점심", color: "#22c55e" },
+          { label: "저녁", color: "#f87171" },
+          { label: "간식", color: "#9ca3af" },
+        ].map((item) => (
+          <span key={item.label} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <span
+              style={{
+                display: "inline-block",
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                background: item.color,
+              }}
+            />
+            {item.label}
+          </span>
+        ))}
+      </div>
+
+      {/* 달력 테이블 */}
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          tableLayout: "fixed",
+        }}
+      >
+        <thead>
+          <tr>
+            {wdays.map((d) => (
+              <th
+                key={d}
+                style={{
+                  border: "1px solid #d1d5db",
+                  background: "#f9fafb",
+                  padding: "5px 2px",
+                  textAlign: "center",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#374151",
+                  width: "14.28%",
+                }}
+              >
+                {d}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {monthWeeks.map((week, wi) => (
+            <tr key={wi}>
+              {week.map((dayData, di) => {
+                if (!dayData) {
+                  return (
+                    <td
+                      key={di}
+                      style={{
+                        border: "1px solid #e5e7eb",
+                        background: "#fafafa",
+                        minHeight: "70px",
+                        height: "70px",
+                      }}
+                    />
+                  );
+                }
+                return (
+                  <td
+                    key={di}
+                    style={{
+                      border: "1px solid #d1d5db",
+                      padding: "4px 5px",
+                      verticalAlign: "top",
+                      minHeight: "70px",
+                    }}
+                  >
+                    {/* 날짜 */}
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        color: "#111827",
+                        marginBottom: "3px",
+                      }}
+                    >
+                      {dayData.date}
+                    </div>
+                    {/* 식단 목록 */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                      {dayData.breakfast && (
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "3px" }}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: "6px",
+                              height: "6px",
+                              borderRadius: "50%",
+                              background: "#fb923c",
+                              marginTop: "3px",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span style={{ fontSize: "10px", lineHeight: 1.35, color: "#374151", wordBreak: "keep-all" }}>
+                            {dayData.breakfast}
+                          </span>
+                        </div>
+                      )}
+                      {dayData.lunch && (
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "3px" }}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: "6px",
+                              height: "6px",
+                              borderRadius: "50%",
+                              background: "#22c55e",
+                              marginTop: "3px",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span style={{ fontSize: "10px", lineHeight: 1.35, color: "#374151", wordBreak: "keep-all" }}>
+                            {dayData.lunch}
+                          </span>
+                        </div>
+                      )}
+                      {dayData.dinner && (
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "3px" }}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: "6px",
+                              height: "6px",
+                              borderRadius: "50%",
+                              background: "#f87171",
+                              marginTop: "3px",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span style={{ fontSize: "10px", lineHeight: 1.35, color: "#374151", wordBreak: "keep-all" }}>
+                            {dayData.dinner}
+                          </span>
+                        </div>
+                      )}
+                      {dayData.snack && (
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "3px" }}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: "6px",
+                              height: "6px",
+                              borderRadius: "50%",
+                              background: "#9ca3af",
+                              marginTop: "3px",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span style={{ fontSize: "10px", lineHeight: 1.35, color: "#374151", wordBreak: "keep-all" }}>
+                            {dayData.snack}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* 하단 문구 */}
+      <p
+        style={{
+          textAlign: "center",
+          fontSize: "10px",
+          color: "#9ca3af",
+          marginTop: "8px",
+        }}
+      >
+        우아식 — 아이의 건강한 한 달 식단을 응원합니다 🍼
+      </p>
+    </div>
   );
 }
