@@ -6,6 +6,8 @@ import { getRecipe } from "@/lib/recipes";
 import type { Recipe } from "@/lib/recipes";
 import { getSeasonalMatch } from "@/lib/seasonal";
 import { getAllergenMatches } from "@/lib/allergens";
+import { getWeekIngredientGroups, getCoupangLink, getKurlyLink } from "@/lib/ingredients";
+import type { CategoryGroup } from "@/lib/ingredients";
 import RecipeModal from "./RecipeModal";
 
 interface UnifiedGroup {
@@ -90,6 +92,7 @@ export default function WeeklyMealPlan({
   );
   const [openRecipe, setOpenRecipe] = useState<Recipe | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showShoppingModal, setShowShoppingModal] = useState(false);
 
   // 월간 데이터를 주 단위로 분할
   const monthWeeks = useMemo(
@@ -102,6 +105,16 @@ export default function WeeklyMealPlan({
     ? dateToWeekIdx(monthlyPlan, selectedDate)
     : 0;
   const currentWeek = monthWeeks[weekIdx] ?? [];
+
+  // 현재 주의 실제 식단 데이터 (null 제외)
+  const weekMeals = currentWeek
+    .filter((d): d is MonthDayMeal => d !== null)
+    .map((d) => ({
+      breakfast: d.breakfast,
+      lunch: d.lunch,
+      dinner: d.dinner,
+      snack: d.snack,
+    }));
 
   // 선택된 날짜의 식단
   const selectedDayMeal =
@@ -371,6 +384,33 @@ export default function WeeklyMealPlan({
                   )}
                 </div>
               )}
+
+              {/* 식재료 구매 버튼 */}
+              {weekMeals.length > 0 && (
+                <div className="mt-5 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowShoppingModal(true)}
+                    className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border-2 border-primary/20 text-primary font-bold text-sm shadow-sm hover:border-primary/40 hover:bg-primary/5 transition-all active:scale-95"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="9" cy="21" r="1" />
+                      <circle cx="20" cy="21" r="1" />
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                    </svg>
+                    식재료 구매
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             monthlyPlan && (
@@ -404,6 +444,16 @@ export default function WeeklyMealPlan({
           stage={stage}
           combinedChildren={combinedChildren}
           onClose={() => setShowPrintModal(false)}
+        />
+      )}
+
+      {/* 식재료 구매 모달 */}
+      {showShoppingModal && monthlyPlan && (
+        <ShoppingModal
+          weekMeals={weekMeals}
+          monthlyPlan={monthlyPlan}
+          currentWeek={currentWeek}
+          onClose={() => setShowShoppingModal(false)}
         />
       )}
     </div>
@@ -733,61 +783,20 @@ function PrintModal({
     <>
       {/* 화면 전용: 어두운 오버레이 (인쇄 시 숨김) */}
       <div
-        className="no-print fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60"
+        className="no-print fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60"
         onClick={onClose}
       >
         <div
-          className="bg-white w-full max-w-5xl max-h-[92vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+          className="bg-white w-full sm:max-w-5xl max-h-[92vh] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 모달 헤더 */}
-          <div className="shrink-0 flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-800">
-              {year}년 {month}월 식단표 미리보기
-            </h2>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleShare}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-600 text-sm font-semibold hover:border-primary/40 hover:text-primary transition-all"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                  <polyline points="16 6 12 2 8 6" />
-                  <line x1="12" y1="2" x2="12" y2="15" />
-                </svg>
-                공유
-              </button>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-white text-sm font-semibold shadow hover:bg-primary-dark transition-all active:scale-95"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="6 9 6 2 18 2 18 9" />
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                  <rect x="6" y="14" width="12" height="8" />
-                </svg>
-                PDF 출력
-              </button>
+          <div className="shrink-0 px-4 sm:px-5 py-3 sm:py-3.5 border-b border-gray-100">
+            {/* 제목 행 */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm sm:text-base font-bold text-gray-800">
+                {year}년 {month}월 식단표 미리보기
+              </h2>
               <button
                 type="button"
                 onClick={onClose}
@@ -807,18 +816,79 @@ function PrintModal({
                 </svg>
               </button>
             </div>
+            {/* 액션 버튼 행 */}
+            <div className="flex items-center gap-2 mt-2.5">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-600 text-xs sm:text-sm font-semibold hover:border-primary/40 hover:text-primary transition-all"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+                공유
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full bg-primary text-white text-xs sm:text-sm font-semibold shadow hover:bg-primary-dark transition-all active:scale-95"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+                PDF 출력
+              </button>
+              <p className="ml-auto text-[10px] text-gray-400 hidden sm:block">
+                * 화면 미리보기용입니다. 인쇄 시 달력 형식으로 출력됩니다.
+              </p>
+            </div>
           </div>
 
           {/* 스크롤 영역 */}
-          <div className="flex-1 overflow-y-auto p-5">
-            <PrintCalendarContent
-              year={year}
-              month={month}
-              title={title}
-              stage={stage}
-              monthWeeks={monthWeeks}
-              mealDotColors={mealDotColors}
-            />
+          <div className="flex-1 overflow-y-auto">
+            {/* 모바일: 일별 세로 리스트 */}
+            <div className="block sm:hidden px-4 py-3">
+              <MobilePrintList
+                year={year}
+                month={month}
+                title={title}
+                stage={stage}
+                monthWeeks={monthWeeks}
+              />
+            </div>
+            {/* 데스크탑: 달력 그리드 */}
+            <div className="hidden sm:block p-5">
+              <PrintCalendarContent
+                year={year}
+                month={month}
+                title={title}
+                stage={stage}
+                monthWeeks={monthWeeks}
+                mealDotColors={mealDotColors}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -837,6 +907,102 @@ function PrintModal({
         </div>
       </div>
     </>
+  );
+}
+
+// 모바일용 일별 리스트 (달력 그리드 대신)
+function MobilePrintList({
+  year,
+  month,
+  title,
+  stage,
+  monthWeeks,
+}: {
+  year: number;
+  month: number;
+  title: string;
+  stage: import("@/lib/mealPlan").Stage;
+  monthWeeks: (import("@/lib/mealPlan").MonthDayMeal | null)[][];
+}) {
+  const wdays = ["월", "화", "수", "목", "금", "토", "일"];
+  const allDays = monthWeeks
+    .flat()
+    .filter((d): d is import("@/lib/mealPlan").MonthDayMeal => d !== null);
+
+  const mealRows = [
+    { key: "breakfast" as const, label: "아침", dot: "bg-orange-400" },
+    { key: "lunch" as const, label: "점심", dot: "bg-green-500" },
+    { key: "dinner" as const, label: "저녁", dot: "bg-red-400" },
+    { key: "snack" as const, label: "간식", dot: "bg-gray-400" },
+  ];
+
+  return (
+    <div>
+      {/* 헤더 */}
+      <div className="text-center mb-4">
+        <p className="text-base font-bold text-gray-800">
+          🍼 {title} 이유식 식단표
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          {year}년 {month}월 &nbsp;·&nbsp; {stage.name} ({stage.mealsPerDay})
+        </p>
+      </div>
+
+      {/* 범례 */}
+      <div className="flex items-center justify-center gap-3 mb-4">
+        {mealRows.map((m) => (
+          <div key={m.key} className="flex items-center gap-1">
+            <span className={`w-2 h-2 rounded-full ${m.dot}`} />
+            <span className="text-[10px] text-gray-500">{m.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 일별 카드 */}
+      <div className="space-y-2">
+        {allDays.map((day) => {
+          const dow =
+            wdays[
+              (new Date(year, month - 1, day.date).getDay() + 6) % 7
+            ];
+          const hasAny =
+            day.breakfast || day.lunch || day.dinner || day.snack;
+          if (!hasAny) return null;
+          return (
+            <div
+              key={day.date}
+              className="bg-gray-50 rounded-xl px-3 py-2.5"
+            >
+              <p className="text-xs font-bold text-gray-700 mb-1.5">
+                {month}월 {day.date}일{" "}
+                <span className="text-gray-400">({dow})</span>
+              </p>
+              <div className="space-y-1">
+                {mealRows.map(({ key, label, dot }) =>
+                  day[key] ? (
+                    <div key={key} className="flex items-start gap-1.5">
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${dot} mt-[5px] shrink-0`}
+                      />
+                      <p className="text-[11px] text-gray-600 leading-snug">
+                        <span className="font-semibold text-gray-700">
+                          {label}
+                        </span>{" "}
+                        {day[key]}
+                      </p>
+                    </div>
+                  ) : null
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[10px] text-gray-400 text-center mt-4">
+        우아식 — 아이의 건강한 한 달 식단을 응원합니다 🍼
+      </p>
+    </div>
   );
 }
 
@@ -1063,6 +1229,175 @@ function PrintCalendarContent({
       >
         우아식 — 아이의 건강한 한 달 식단을 응원합니다 🍼
       </p>
+    </div>
+  );
+}
+
+// ── 식재료 구매 모달 ──
+
+function ShoppingModal({
+  weekMeals,
+  monthlyPlan,
+  currentWeek,
+  onClose,
+}: {
+  weekMeals: Array<{ breakfast: string; lunch: string; dinner: string; snack: string }>;
+  monthlyPlan: MonthPlan;
+  currentWeek: (MonthDayMeal | null)[];
+  onClose: () => void;
+}) {
+  const groups: CategoryGroup[] = useMemo(
+    () => getWeekIngredientGroups(weekMeals),
+    [weekMeals]
+  );
+  const totalCount = groups.reduce((sum, g) => sum + g.items.length, 0);
+
+  // 현재 주의 날짜 범위 계산
+  const weekDates = currentWeek
+    .filter((d): d is MonthDayMeal => d !== null)
+    .map((d) => d.date);
+  const weekStart = weekDates.length > 0 ? Math.min(...weekDates) : 0;
+  const weekEnd = weekDates.length > 0 ? Math.max(...weekDates) : 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white w-full sm:max-w-md max-h-[88vh] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 헤더 */}
+        <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-base font-bold text-text flex items-center gap-1.5">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-primary"
+              >
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              </svg>
+              이번 주 식재료 목록
+            </h2>
+            <p className="text-xs text-text-light mt-0.5">
+              {monthlyPlan.month}월 {weekStart}일 ~ {weekEnd}일 · 총{" "}
+              <span className="font-semibold text-primary">{totalCount}</span>가지
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* 식재료 목록 */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+          {groups.length === 0 ? (
+            <p className="text-center text-text-light text-sm py-10">
+              식재료 정보를 찾을 수 없습니다.
+            </p>
+          ) : (
+            groups.map((group) => (
+              <div key={group.category}>
+                {/* 카테고리 헤더 */}
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-sm">{group.emoji}</span>
+                  <span className="text-xs font-bold text-text-light tracking-wide">
+                    {group.category}
+                  </span>
+                  <span className="text-[10px] text-text-light bg-gray-100 rounded-full px-1.5 py-0.5">
+                    {group.items.length}
+                  </span>
+                </div>
+
+                {/* 식재료 행 */}
+                <div className="space-y-1.5">
+                  {group.items.map((item) => (
+                    <div
+                      key={item.name}
+                      className="rounded-xl bg-gray-50 px-3 pt-2.5 pb-2"
+                    >
+                      {/* 이름·수량·구매 버튼 */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-base leading-none shrink-0">
+                            {item.emoji}
+                          </span>
+                          <span className="text-sm font-semibold text-text">
+                            {item.name}
+                          </span>
+                          {item.quantity && (
+                            <span className="text-xs font-medium text-primary shrink-0">
+                              {item.quantity}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                          <a
+                            href={getCoupangLink(item.name)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-bold text-white bg-red-500 hover:bg-red-600 px-2.5 py-1 rounded-full transition-colors active:scale-95 inline-block"
+                          >
+                            쿠팡
+                          </a>
+                          <a
+                            href={getKurlyLink(item.name)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-bold text-white bg-purple-600 hover:bg-purple-700 px-2.5 py-1 rounded-full transition-colors active:scale-95 inline-block"
+                          >
+                            컬리
+                          </a>
+                        </div>
+                      </div>
+                      {/* 사용 메뉴명 */}
+                      {item.meals.length > 0 && (
+                        <p className="text-[10px] text-text-light mt-1 ml-6 leading-relaxed">
+                          {item.meals.slice(0, 2).join(", ")}
+                          {item.meals.length > 2 &&
+                            ` 외 ${item.meals.length - 2}개`}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* 하단 안내 */}
+        <div className="shrink-0 px-5 py-3 border-t border-gray-100">
+          <p className="text-[10px] text-text-light text-center">
+            * 링크 클릭 시 해당 쇼핑몰 검색 결과로 이동합니다.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
