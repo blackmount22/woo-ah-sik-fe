@@ -8,6 +8,7 @@ import WeeklyMealPlan from "@/components/WeeklyMealPlan";
 import FormulaResult from "@/components/FormulaResult";
 import KakaoAdBanner from "@/components/KakaoAdBanner";
 import GoogleAdBanner from "@/components/GoogleAdBanner";
+import SiteFooter from "@/components/SiteFooter";
 import InstallButton from "@/components/InstallButton";
 import FridgeMealModal from "@/components/FridgeMealModal";
 import FridgeMealResultCard from "@/components/FridgeMealResultCard";
@@ -499,6 +500,7 @@ export default function Home() {
           <KakaoAdBanner />
           <GoogleAdBanner />
         </main>
+        <SiteFooter />
       </div>
     );
   }
@@ -555,6 +557,7 @@ export default function Home() {
           <KakaoAdBanner />
           <GoogleAdBanner />
         </main>
+        <SiteFooter />
       </div>
     );
   }
@@ -709,6 +712,7 @@ export default function Home() {
           </div>
         )}
       </main>
+      <SiteFooter />
     </div>
   );
 }
