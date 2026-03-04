@@ -8,6 +8,8 @@ import WeeklyMealPlan from "@/components/WeeklyMealPlan";
 import FormulaResult from "@/components/FormulaResult";
 import KakaoAdBanner from "@/components/KakaoAdBanner";
 import InstallButton from "@/components/InstallButton";
+import FridgeMealModal from "@/components/FridgeMealModal";
+import FridgeMealResultCard from "@/components/FridgeMealResultCard";
 import {
   calcMonths,
   getStage,
@@ -30,6 +32,12 @@ import {
   type FormulaAmount,
   type ChildInfo,
 } from "@/lib/mealPlan";
+import {
+  generateFridgeMeals,
+  getCurrentMealTime,
+  type FridgeIngredient,
+  type FridgeMealResult,
+} from "@/lib/fridgeMeal";
 
 interface BirthDate {
   year: string;
@@ -198,6 +206,14 @@ export default function Home() {
   const [futureDateAlert, setFutureDateAlert] = useState<string | null>(null);
   const skipSave = useRef(false);
 
+  // 냉장고 파먹기 관련 상태
+  const [showModeModal, setShowModeModal] = useState(false);
+  const [showFridgeModal, setShowFridgeModal] = useState(false);
+  const [fridgeResults, setFridgeResults] = useState<FridgeMealResult[] | null>(null);
+  // 모달 확인용 임시 저장
+  const pendingBirthDates = useRef<BirthDate[]>([]);
+  const pendingWeights = useRef<string[]>([]);
+
   // localStorage에서 복원
   useEffect(() => {
     try {
@@ -324,7 +340,51 @@ export default function Home() {
       }
     }
 
-    setPlans(buildPlans(selected, weights.slice(0, childCount)));
+    // 유효성 통과 → 모드 선택 모달 표시
+    pendingBirthDates.current = selected;
+    pendingWeights.current = weights.slice(0, childCount);
+    setShowModeModal(true);
+  };
+
+  // 기본 식단 생성 선택
+  const handleModeNormal = () => {
+    setShowModeModal(false);
+    setPlans(
+      buildPlans(pendingBirthDates.current, pendingWeights.current)
+    );
+  };
+
+  // 냉장고 파먹기 선택
+  const handleModeFridge = () => {
+    setShowModeModal(false);
+    setShowFridgeModal(true);
+  };
+
+  // 냉장고 재료 확정 → 식단 생성
+  const handleFridgeConfirm = (ingredients: FridgeIngredient[]) => {
+    setShowFridgeModal(false);
+    const menuChildren = pendingBirthDates.current
+      .map((d, i) => {
+        const months = calcMonths(Number(d.year), Number(d.month), Number(d.day));
+        const stage = getStage(months);
+        return { label: childLabels[i], months, stage };
+      })
+      .filter((c) => c.stage.hasMenu);
+
+    if (menuChildren.length === 0) {
+      // 모두 분유기 아기인 경우 → 기본 식단으로 대체
+      setPlans(
+        buildPlans(pendingBirthDates.current, pendingWeights.current)
+      );
+      return;
+    }
+
+    setFridgeResults(
+      generateFridgeMeals(
+        ingredients,
+        menuChildren.map((c) => ({ label: c.label, months: c.months }))
+      )
+    );
   };
 
   const handleReset = () => {
@@ -333,10 +393,58 @@ export default function Home() {
     setBirthDates(defaultBirthDates());
     setWeights(defaultWeights());
     setPlans(null);
+    setFridgeResults(null);
     localStorage.removeItem(STORAGE_KEY);
   };
 
-  // 식단표 결과 화면
+  // 냉장고 파먹기 결과 화면
+  if (fridgeResults) {
+    const mealTimeIcon: Record<string, string> = { 아침: "🌅", 점심: "☀️", 저녁: "🌙" };
+    const mealTime = fridgeResults[0]?.mealTime ?? getCurrentMealTime();
+    return (
+      <div className="min-h-screen flex flex-col items-center px-4 py-8 sm:py-16">
+        <main className="w-full max-w-md flex flex-col items-center gap-10">
+          {/* 로고 */}
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-primary tracking-tight">우아식</h1>
+            <p className="mt-1 text-sm text-text-light">우리아이 식단표</p>
+            <div className="mt-2">
+              <InstallButton />
+            </div>
+          </div>
+
+          {/* 타이틀 */}
+          <div className="w-full text-center">
+            <div className="text-3xl mb-2">{mealTimeIcon[mealTime] ?? "🍽️"}</div>
+            <h2 className="text-xl font-bold text-text">
+              오늘 {mealTime} 냉장고 파먹기 식단
+            </h2>
+            <p className="mt-1 text-sm text-text-light">
+              입력하신 재료로 만든 맞춤 레시피예요
+            </p>
+          </div>
+
+          {/* 결과 카드 */}
+          {fridgeResults.map((result, i) => (
+            <FridgeMealResultCard key={i} result={result} />
+          ))}
+
+          {/* 다시 선택하기 */}
+          <button
+            type="button"
+            onClick={handleReset}
+            className="w-full py-4 rounded-2xl text-lg font-bold bg-white text-primary border-2 border-primary hover:bg-primary hover:text-white transition-all active:scale-[0.98]"
+          >
+            다시 선택하기
+          </button>
+
+          <KakaoAdBanner />
+        </main>
+      </div>
+    );
+  }
+
+  // 기본 식단표 결과 화면
   if (plans) {
     return (
       <div className="min-h-screen flex flex-col items-center px-4 py-8 sm:py-16">
@@ -461,6 +569,69 @@ export default function Home() {
         </button>
 
         <KakaoAdBanner />
+
+        {/* 모드 선택 모달 */}
+        {showModeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+              <h2 className="text-lg font-bold text-text text-center mb-1">
+                오늘 식단을 어떻게 만들까요?
+              </h2>
+              <p className="text-sm text-text-light text-center mb-5">
+                원하시는 방식을 선택해주세요
+              </p>
+              <div className="flex flex-col gap-3">
+                {/* 냉장고 파먹기 */}
+                <button
+                  type="button"
+                  onClick={handleModeFridge}
+                  className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-all active:scale-[0.98] text-left"
+                >
+                  <span className="text-3xl flex-shrink-0">🧊</span>
+                  <div>
+                    <p className="font-bold text-primary text-base">냉장고 파먹기</p>
+                    <p className="text-xs text-text-light mt-0.5 leading-relaxed">
+                      냉장고 재료를 입력하면
+                      <br />
+                      오늘의 맞춤 레시피를 만들어드려요
+                    </p>
+                  </div>
+                </button>
+                {/* 기본 식단 생성 */}
+                <button
+                  type="button"
+                  onClick={handleModeNormal}
+                  className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-border bg-white hover:bg-gray-50 transition-all active:scale-[0.98] text-left"
+                >
+                  <span className="text-3xl flex-shrink-0">🥄</span>
+                  <div>
+                    <p className="font-bold text-text text-base">식단 생성</p>
+                    <p className="text-xs text-text-light mt-0.5 leading-relaxed">
+                      아이 나이에 맞는
+                      <br />
+                      주간·월간 식단표를 생성해요
+                    </p>
+                  </div>
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModeModal(false)}
+                className="mt-4 w-full py-2.5 rounded-xl text-sm text-text-light border border-border hover:bg-gray-50 transition-all"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 냉장고 파먹기 재료 입력 모달 */}
+        {showFridgeModal && (
+          <FridgeMealModal
+            onConfirm={handleFridgeConfirm}
+            onClose={() => setShowFridgeModal(false)}
+          />
+        )}
 
         {/* 미래 날짜 알림 모달 */}
         {futureDateAlert && (
