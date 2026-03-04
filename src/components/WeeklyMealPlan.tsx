@@ -8,6 +8,8 @@ import { getSeasonalMatch } from "@/lib/seasonal";
 import { getAllergenMatches } from "@/lib/allergens";
 import { getWeekIngredientGroups, getCoupangLink, getKurlyLink } from "@/lib/ingredients";
 import type { CategoryGroup } from "@/lib/ingredients";
+import { calcWeekNutrition, weeklyVitaminAvg } from "@/lib/nutrition";
+import type { NutritionDayResult } from "@/lib/nutrition";
 import RecipeModal from "./RecipeModal";
 
 interface UnifiedGroup {
@@ -93,6 +95,7 @@ export default function WeeklyMealPlan({
   const [openRecipe, setOpenRecipe] = useState<Recipe | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showShoppingModal, setShowShoppingModal] = useState(false);
+  const [showNutritionModal, setShowNutritionModal] = useState(false);
 
   // 월간 데이터를 주 단위로 분할
   const monthWeeks = useMemo(
@@ -385,9 +388,9 @@ export default function WeeklyMealPlan({
                 </div>
               )}
 
-              {/* 식재료 구매 버튼 */}
+              {/* 식재료 구매 + 영양 성분 버튼 */}
               {weekMeals.length > 0 && (
-                <div className="mt-5 flex justify-center">
+                <div className="mt-5 flex justify-center gap-3 flex-wrap">
                   <button
                     type="button"
                     onClick={() => setShowShoppingModal(true)}
@@ -408,6 +411,27 @@ export default function WeeklyMealPlan({
                       <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                     </svg>
                     식재료 구매
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowNutritionModal(true)}
+                    className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border-2 border-accent/30 text-accent font-bold text-sm shadow-sm hover:border-accent/50 hover:bg-accent/5 transition-all active:scale-95"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M18 20V10" />
+                      <path d="M12 20V4" />
+                      <path d="M6 20v-6" />
+                    </svg>
+                    영양 성분
                   </button>
                 </div>
               )}
@@ -454,6 +478,16 @@ export default function WeeklyMealPlan({
           monthlyPlan={monthlyPlan}
           currentWeek={currentWeek}
           onClose={() => setShowShoppingModal(false)}
+        />
+      )}
+
+      {/* 영양 성분 대시보드 모달 */}
+      {showNutritionModal && monthlyPlan && (
+        <NutritionModal
+          currentWeek={currentWeek}
+          stageName={stage.name}
+          monthlyPlan={monthlyPlan}
+          onClose={() => setShowNutritionModal(false)}
         />
       )}
     </div>
@@ -1396,6 +1430,212 @@ function ShoppingModal({
           <p className="text-[10px] text-text-light text-center">
             * 링크 클릭 시 해당 쇼핑몰 검색 결과로 이동합니다.
           </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 영양 성분 대시보드 모달 ──
+
+function NutritionModal({
+  currentWeek,
+  stageName,
+  monthlyPlan,
+  onClose,
+}: {
+  currentWeek: (MonthDayMeal | null)[];
+  stageName: string;
+  monthlyPlan: MonthPlan;
+  onClose: () => void;
+}) {
+  const weekData: NutritionDayResult[] = useMemo(
+    () =>
+      calcWeekNutrition(
+        currentWeek.map((d) =>
+          d
+            ? { breakfast: d.breakfast, lunch: d.lunch, dinner: d.dinner, snack: d.snack }
+            : null
+        ),
+        stageName
+      ),
+    [currentWeek, stageName]
+  );
+
+  const vitAvg = useMemo(() => weeklyVitaminAvg(weekData), [weekData]);
+
+  // 탄단지 최대값 (막대 높이 정규화용)
+  const maxMacro = Math.max(
+    ...weekData.filter((d) => !d.empty).map((d) => d.carbs + d.protein + d.fat),
+    1
+  );
+
+  const vitamins = [
+    { key: "vitA",    label: "비타민 A",  val: vitAvg.vitA,    color: "bg-orange-400",  icon: "🥕" },
+    { key: "vitC",    label: "비타민 C",  val: vitAvg.vitC,    color: "bg-green-500",   icon: "🍊" },
+    { key: "vitD",    label: "비타민 D",  val: vitAvg.vitD,    color: "bg-yellow-400",  icon: "☀️" },
+    { key: "calcium", label: "칼슘",      val: vitAvg.calcium, color: "bg-blue-400",    icon: "🥛" },
+    { key: "iron",    label: "철분",      val: vitAvg.iron,    color: "bg-red-400",     icon: "🥩" },
+  ] as const;
+
+  function barColor(pct: number) {
+    if (pct >= 80) return "bg-green-500";
+    if (pct >= 50) return "bg-yellow-400";
+    return "bg-red-400";
+  }
+
+  // 현재 주 날짜 범위
+  const weekDates = currentWeek
+    .filter((d): d is MonthDayMeal => d !== null)
+    .map((d) => d.date);
+  const weekStart = weekDates.length > 0 ? Math.min(...weekDates) : 0;
+  const weekEnd   = weekDates.length > 0 ? Math.max(...weekDates) : 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white w-full sm:max-w-md max-h-[90vh] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 헤더 */}
+        <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-base font-bold text-text flex items-center gap-1.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                <path d="M18 20V10" /><path d="M12 20V4" /><path d="M6 20v-6" />
+              </svg>
+              이번 주 영양 성분 대시보드
+            </h2>
+            <p className="text-xs text-text-light mt-0.5">
+              {monthlyPlan.month}월 {weekStart}일 ~ {weekEnd}일 · {stageName}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* 본문 */}
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-7">
+
+          {/* ── 탄·단·지 막대 차트 ── */}
+          <section>
+            <h3 className="text-sm font-bold text-text mb-1">탄·단·지 일별 섭취량</h3>
+            <p className="text-xs text-text-light mb-4">막대가 높을수록 해당일 섭취량이 많아요</p>
+
+            {/* 범례 */}
+            <div className="flex gap-4 mb-3">
+              {[
+                { color: "bg-orange-400", label: "탄수화물" },
+                { color: "bg-blue-500",   label: "단백질" },
+                { color: "bg-purple-400", label: "지방" },
+              ].map((l) => (
+                <span key={l.label} className="flex items-center gap-1 text-xs text-text-light">
+                  <span className={`w-2.5 h-2.5 rounded-sm ${l.color}`} />
+                  {l.label}
+                </span>
+              ))}
+            </div>
+
+            {/* 막대 그래프 */}
+            <div className="flex items-end gap-1.5 h-36">
+              {weekData.map((day) => {
+                const total = day.carbs + day.protein + day.fat;
+                const heightPct = day.empty ? 0 : (total / maxMacro) * 100;
+                const carbH   = day.empty ? 0 : (day.carbs   / total) * 100;
+                const protH   = day.empty ? 0 : (day.protein / total) * 100;
+                const fatH    = day.empty ? 0 : (day.fat     / total) * 100;
+                return (
+                  <div key={day.label} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className="w-full flex flex-col-reverse rounded-t-md overflow-hidden transition-all"
+                      style={{ height: `${Math.max(heightPct, day.empty ? 0 : 6)}%`, maxHeight: "100%" }}
+                      title={day.empty ? "" : `탄${day.carbs}g 단${day.protein}g 지${day.fat}g`}
+                    >
+                      {!day.empty && (
+                        <>
+                          <div style={{ height: `${carbH}%` }}  className="bg-orange-400 min-h-[2px]" />
+                          <div style={{ height: `${protH}%` }}  className="bg-blue-500 min-h-[2px]" />
+                          <div style={{ height: `${fatH}%` }}   className="bg-purple-400 min-h-[2px]" />
+                        </>
+                      )}
+                    </div>
+                    <span className={`text-[10px] font-medium ${day.empty ? "text-gray-300" : "text-text-light"}`}>
+                      {day.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 수치 요약 */}
+            <div className="mt-3 grid grid-cols-7 gap-1">
+              {weekData.map((day) => (
+                <div key={day.label} className="text-center">
+                  {!day.empty ? (
+                    <p className="text-[9px] text-text-light leading-tight">
+                      {day.carbs+day.protein+day.fat}g
+                    </p>
+                  ) : (
+                    <p className="text-[9px] text-gray-200">—</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ── 주요 영양소 주간 평균 충족도 ── */}
+          <section>
+            <h3 className="text-sm font-bold text-text mb-1">주요 영양소 주간 충족도</h3>
+            <p className="text-xs text-text-light mb-4">이번 주 하루 평균 권장량 대비 충족도예요</p>
+
+            <div className="space-y-3.5">
+              {vitamins.map((vit) => (
+                <div key={vit.key}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm text-text flex items-center gap-1.5">
+                      <span>{vit.icon}</span>
+                      <span className="font-medium">{vit.label}</span>
+                    </span>
+                    <span className={`text-sm font-bold ${
+                      vit.val >= 80 ? "text-green-600" :
+                      vit.val >= 50 ? "text-yellow-600" : "text-red-500"
+                    }`}>
+                      {vit.val}%
+                    </span>
+                  </div>
+                  <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${barColor(vit.val)}`}
+                      style={{ width: `${vit.val}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-text-light mt-1">
+                    {vit.val >= 80 ? "✅ 충분히 섭취하고 있어요" :
+                     vit.val >= 50 ? "🟡 조금 더 섭취하면 좋아요" :
+                                     "🔴 보충이 필요해요"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* 안내 */}
+          <div className="p-3 bg-gray-50 rounded-xl">
+            <p className="text-[10px] text-text-light leading-relaxed">
+              💡 영양 성분은 식재료 구성 기준 <strong>근사치</strong>이며 실제와 다를 수 있어요.
+              정확한 영양 섭취는 소아과 전문의와 상담하세요.
+            </p>
+          </div>
         </div>
       </div>
     </div>

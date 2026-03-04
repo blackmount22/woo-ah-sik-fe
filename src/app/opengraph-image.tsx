@@ -174,7 +174,7 @@ export default function OgImage() {
               />
             </div>
 
-            {/* 우 로고 마크 */}
+            {/* 우 로고 마크 (그릇+포크+숟가락 아이콘) */}
             <div
               style={{
                 width: 120,
@@ -185,17 +185,39 @@ export default function OgImage() {
                 alignItems: "center",
                 justifyContent: "center",
                 boxShadow: "0 8px 30px rgba(255,107,107,0.3)",
+                overflow: "hidden",
               }}
             >
-              <span
-                style={{
-                  fontSize: 72,
-                  fontWeight: 700,
-                  color: "white",
-                }}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="120"
+                height="120"
+                viewBox="0 0 192 192"
               >
-                우
-              </span>
+                {/* 그릇 몸통 */}
+                <path d="M 60 44 C 58 70 71 85 96 87 C 121 85 134 70 132 44 Z" fill="white"/>
+                {/* 그릇 개구부 */}
+                <ellipse cx="96" cy="44" rx="36" ry="9" fill="#FF6B6B"/>
+                {/* 그릇 테두리 */}
+                <ellipse cx="96" cy="44" rx="36" ry="9" fill="none" stroke="white" strokeWidth="5"/>
+                {/* 쌀 점 */}
+                <circle cx="86" cy="43" r="3" fill="white" opacity="0.75"/>
+                <circle cx="96" cy="40" r="2.5" fill="white" opacity="0.75"/>
+                <circle cx="106" cy="43" r="3" fill="white" opacity="0.75"/>
+                {/* 그릇 받침 */}
+                <rect x="84" y="85" width="24" height="5" rx="2.5" fill="white"/>
+                <rect x="77" y="89" width="38" height="4" rx="2" fill="white"/>
+                {/* 가로줄기 */}
+                <line x1="44" y1="126" x2="148" y2="126" stroke="white" strokeWidth="6.5" strokeLinecap="round"/>
+                {/* 세로줄기 */}
+                <line x1="96" y1="126" x2="96" y2="168" stroke="white" strokeWidth="6.5" strokeLinecap="round"/>
+                {/* 포크 살 */}
+                <line x1="53" y1="126" x2="51" y2="108" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+                <line x1="65" y1="126" x2="63" y2="104" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+                <line x1="77" y1="126" x2="75" y2="108" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+                {/* 숟가락 머리 */}
+                <ellipse cx="129" cy="112" rx="16" ry="12" fill="white"/>
+              </svg>
             </div>
           </div>
 

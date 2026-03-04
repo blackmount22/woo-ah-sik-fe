@@ -13,11 +13,34 @@ interface Props {
 }
 
 export default function FridgeMealResultCard({ result }: Props) {
-  const { mealTime, menuName, ingredients, steps, tip, stageName, months, childLabel } = result;
+  const { mealTime, menuName, ingredients, steps, tip, stageName, months, childLabel, skipped, hasUsableIngredients } = result;
   const icon = mealTimeIcons[mealTime] ?? "🍽️";
 
   return (
     <div className="w-full rounded-2xl bg-white border border-border shadow-sm overflow-hidden">
+      {/* 사용 불가 재료 경고 */}
+      {skipped.length > 0 && (
+        <div className="px-5 py-3 bg-amber-50 border-b border-amber-100">
+          <p className="text-xs font-semibold text-amber-700 mb-1.5">⚠️ 다음 재료는 사용하지 않았어요</p>
+          <div className="flex flex-col gap-1">
+            {skipped.map((s, i) => (
+              <p key={i} className="text-xs text-amber-600 leading-relaxed">
+                <span className="font-semibold">{s.name}</span> — {s.reason}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 사용 가능한 재료 없음 안내 */}
+      {!hasUsableIngredients && (
+        <div className="px-5 py-3 bg-blue-50 border-b border-blue-100">
+          <p className="text-xs text-blue-700 leading-relaxed">
+            💡 입력한 재료 중 아이에게 적합한 것이 없어 기본 야채죽 레시피를 안내해드려요.
+          </p>
+        </div>
+      )}
+
       {/* 헤더 */}
       <div className="px-5 py-4 bg-primary/5 border-b border-border">
         <div className="flex items-center justify-between">

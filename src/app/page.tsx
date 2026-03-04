@@ -210,6 +210,7 @@ export default function Home() {
   const [showModeModal, setShowModeModal] = useState(false);
   const [showFridgeModal, setShowFridgeModal] = useState(false);
   const [fridgeResults, setFridgeResults] = useState<FridgeMealResult[] | null>(null);
+  const [fridgeFormulaPlans, setFridgeFormulaPlans] = useState<ChildPlan[]>([]);
   // 모달 확인용 임시 저장
   const pendingBirthDates = useRef<BirthDate[]>([]);
   const pendingWeights = useRef<string[]>([]);
@@ -363,13 +364,15 @@ export default function Home() {
   // 냉장고 재료 확정 → 식단 생성
   const handleFridgeConfirm = (ingredients: FridgeIngredient[]) => {
     setShowFridgeModal(false);
-    const menuChildren = pendingBirthDates.current
-      .map((d, i) => {
-        const months = calcMonths(Number(d.year), Number(d.month), Number(d.day));
-        const stage = getStage(months);
-        return { label: childLabels[i], months, stage };
-      })
-      .filter((c) => c.stage.hasMenu);
+
+    const allChildren = pendingBirthDates.current.map((d, i) => {
+      const months = calcMonths(Number(d.year), Number(d.month), Number(d.day));
+      const stage = getStage(months);
+      return { index: i, label: childLabels[i], months, stage };
+    });
+
+    const menuChildren = allChildren.filter((c) => c.stage.hasMenu);
+    const formulaChildren = allChildren.filter((c) => !c.stage.hasMenu);
 
     if (menuChildren.length === 0) {
       // 모두 분유기 아기인 경우 → 기본 식단으로 대체
@@ -379,10 +382,29 @@ export default function Home() {
       return;
     }
 
+    // 분유기 아이 플랜 구성 (순서 정렬용 index 포함)
+    const formulaPlans: ChildPlan[] = formulaChildren.map((child) => {
+      const plan: ChildPlan = {
+        label: child.label,
+        months: child.months,
+        stage: child.stage,
+        weeklyPlan: [],
+        monthlyPlan: null,
+      };
+      const weightStr = pendingWeights.current[child.index];
+      if (weightStr) {
+        const weightKg = Number(weightStr);
+        plan.weightKg = weightKg;
+        plan.formula = calcFormulaAmount(child.months, weightKg);
+      }
+      return plan;
+    });
+
+    setFridgeFormulaPlans(formulaPlans);
     setFridgeResults(
       generateFridgeMeals(
         ingredients,
-        menuChildren.map((c) => ({ label: c.label, months: c.months }))
+        menuChildren.map((c) => ({ label: c.label, months: c.months, childIndex: c.index }))
       )
     );
   };
@@ -394,6 +416,7 @@ export default function Home() {
     setWeights(defaultWeights());
     setPlans(null);
     setFridgeResults(null);
+    setFridgeFormulaPlans([]);
     localStorage.removeItem(STORAGE_KEY);
   };
 
@@ -401,12 +424,33 @@ export default function Home() {
   if (fridgeResults) {
     const mealTimeIcon: Record<string, string> = { 아침: "🌅", 점심: "☀️", 저녁: "🌙" };
     const mealTime = fridgeResults[0]?.mealTime ?? getCurrentMealTime();
+
+    // 식단 결과 + 분유 결과를 원래 아이 선택 순서대로 병합
+    type DisplayItem =
+      | { kind: "meal"; data: FridgeMealResult; sortIdx: number }
+      | { kind: "formula"; data: ChildPlan; sortIdx: number };
+
+    const combined: DisplayItem[] = [
+      ...fridgeResults.map((r) => ({
+        kind: "meal" as const,
+        data: r,
+        sortIdx: r.childIndex,
+      })),
+      ...fridgeFormulaPlans.map((p) => ({
+        kind: "formula" as const,
+        data: p,
+        sortIdx: childLabels.indexOf(p.label),
+      })),
+    ];
+    combined.sort((a, b) => a.sortIdx - b.sortIdx);
+
     return (
       <div className="min-h-screen flex flex-col items-center px-4 py-8 sm:py-16">
         <main className="w-full max-w-md flex flex-col items-center gap-10">
           {/* 로고 */}
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-primary tracking-tight">우아식</h1>
+            <img src="/icons/icon-192.svg" alt="우아식 로고" className="w-16 h-16 mx-auto mb-2" />
+            <h1 className="text-3xl font-bold text-primary tracking-tight">우아식</h1>
             <p className="mt-1 text-sm text-text-light">우리아이 식단표</p>
             <div className="mt-2">
               <InstallButton />
@@ -424,10 +468,23 @@ export default function Home() {
             </p>
           </div>
 
-          {/* 결과 카드 */}
-          {fridgeResults.map((result, i) => (
-            <FridgeMealResultCard key={i} result={result} />
-          ))}
+          {/* 결과 카드: 아이 순서대로 식단/분유 혼합 출력 */}
+          {combined.map((item, i) =>
+            item.kind === "formula" ? (
+              item.data.formula && item.data.weightKg ? (
+                <FormulaResult
+                  key={i}
+                  childLabel={item.data.label}
+                  months={item.data.months}
+                  stage={item.data.stage}
+                  weightKg={item.data.weightKg}
+                  formula={item.data.formula}
+                />
+              ) : null
+            ) : (
+              <FridgeMealResultCard key={i} result={item.data} />
+            )
+          )}
 
           {/* 다시 선택하기 */}
           <button
@@ -451,12 +508,9 @@ export default function Home() {
         <main className="w-full max-w-md flex flex-col items-center gap-10">
           {/* 로고 */}
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-primary tracking-tight">
-              우아식
-            </h1>
-            <p className="mt-1 text-sm text-text-light">
-              우리아이 식단표
-            </p>
+            <img src="/icons/icon-192.svg" alt="우아식 로고" className="w-16 h-16 mx-auto mb-2" />
+            <h1 className="text-3xl font-bold text-primary tracking-tight">우아식</h1>
+            <p className="mt-1 text-sm text-text-light">우리아이 식단표</p>
             <div className="mt-2">
               <InstallButton />
             </div>
@@ -508,9 +562,8 @@ export default function Home() {
       <main className="w-full max-w-md flex flex-col items-center gap-8">
         {/* 로고 / 타이틀 */}
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-primary tracking-tight">
-            우아식
-          </h1>
+          <img src="/icons/icon-192.svg" alt="우아식 로고" className="w-16 h-16 mx-auto mb-2" />
+          <h1 className="text-3xl font-bold text-primary tracking-tight">우아식</h1>
           <p className="mt-1 text-sm text-text-light">우리아이식단</p>
           <div className="mt-2">
             <InstallButton />
