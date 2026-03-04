@@ -7,6 +7,7 @@ import WeightInput from "@/components/WeightInput";
 import WeeklyMealPlan from "@/components/WeeklyMealPlan";
 import FormulaResult from "@/components/FormulaResult";
 import KakaoAdBanner from "@/components/KakaoAdBanner";
+import GoogleAdBanner from "@/components/GoogleAdBanner";
 import InstallButton from "@/components/InstallButton";
 import FridgeMealModal from "@/components/FridgeMealModal";
 import FridgeMealResultCard from "@/components/FridgeMealResultCard";
@@ -496,6 +497,7 @@ export default function Home() {
           </button>
 
           <KakaoAdBanner />
+          <GoogleAdBanner />
         </main>
       </div>
     );
@@ -551,6 +553,7 @@ export default function Home() {
           </button>
 
           <KakaoAdBanner />
+          <GoogleAdBanner />
         </main>
       </div>
     );
@@ -622,6 +625,7 @@ export default function Home() {
         </button>
 
         <KakaoAdBanner />
+        <GoogleAdBanner />
 
         {/* 모드 선택 모달 */}
         {showModeModal && (

@@ -669,14 +669,19 @@ function MealCard({
   menu: string;
   onClick: (menu: string) => void;
 }) {
-  const hasRecipe = !!getRecipe(menu);
-  const seasonal = getSeasonalMatch(menu);
+  // " + " 로 분리된 다중 메뉴 지원
+  const dishParts = menu.split(" + ");
+  const mainDish  = dishParts[0];
+  const isMulti   = dishParts.length > 1;
+
+  const hasRecipe = !!getRecipe(mainDish);
+  const seasonal  = getSeasonalMatch(menu);
   const allergens = getAllergenMatches(menu);
 
   return (
     <button
       type="button"
-      onClick={() => onClick(menu)}
+      onClick={() => onClick(mainDish)}
       className={`w-full text-left p-4 rounded-2xl border-l-4 ${mealColors[type]} transition-all ${
         hasRecipe
           ? "cursor-pointer hover:shadow-md active:scale-[0.98]"
@@ -702,7 +707,7 @@ function MealCard({
             </span>
           )}
           <a
-            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(menu + " 만들기 레시피")}`}
+            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(mainDish + " 만들기 레시피")}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
@@ -715,7 +720,27 @@ function MealCard({
           </a>
         </div>
       </div>
-      <p className="text-text font-medium pl-7">{menu}</p>
+
+      {/* 단일 메뉴 or 다중 반찬 */}
+      {isMulti ? (
+        <div className="flex flex-wrap gap-1.5 pl-7 mt-0.5">
+          {dishParts.map((dish, i) => (
+            <span
+              key={i}
+              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                i === 0
+                  ? "bg-white text-text border-border font-bold"
+                  : "bg-white/60 text-text-light border-border/70"
+              }`}
+            >
+              {dish}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="text-text font-medium pl-7">{menu}</p>
+      )}
+
       {seasonal && (
         <p className="text-[11px] text-accent mt-1 pl-7">
           제철 재료: {seasonal.ingredients.join(", ")}
@@ -1547,43 +1572,53 @@ function NutritionModal({
             </div>
 
             {/* 막대 그래프 */}
-            <div className="flex items-end gap-1.5 h-36">
-              {weekData.map((day) => {
-                const total = day.carbs + day.protein + day.fat;
-                const heightPct = day.empty ? 0 : (total / maxMacro) * 100;
-                const carbH   = day.empty ? 0 : (day.carbs   / total) * 100;
-                const protH   = day.empty ? 0 : (day.protein / total) * 100;
-                const fatH    = day.empty ? 0 : (day.fat     / total) * 100;
-                return (
-                  <div key={day.label} className="flex-1 flex flex-col items-center gap-1">
-                    <div
-                      className="w-full flex flex-col-reverse rounded-t-md overflow-hidden transition-all"
-                      style={{ height: `${Math.max(heightPct, day.empty ? 0 : 6)}%`, maxHeight: "100%" }}
-                      title={day.empty ? "" : `탄${day.carbs}g 단${day.protein}g 지${day.fat}g`}
-                    >
-                      {!day.empty && (
-                        <>
-                          <div style={{ height: `${carbH}%` }}  className="bg-orange-400 min-h-[2px]" />
-                          <div style={{ height: `${protH}%` }}  className="bg-blue-500 min-h-[2px]" />
-                          <div style={{ height: `${fatH}%` }}   className="bg-purple-400 min-h-[2px]" />
-                        </>
-                      )}
-                    </div>
-                    <span className={`text-[10px] font-medium ${day.empty ? "text-gray-300" : "text-text-light"}`}>
-                      {day.label}
-                    </span>
+            <div className="relative">
+              {/* y축 가이드라인 */}
+              <div className="absolute inset-x-0 top-0 bottom-6 flex flex-col justify-between pointer-events-none">
+                {[100, 75, 50, 25].map((pct) => (
+                  <div key={pct} className="flex items-center gap-1">
+                    <span className="text-[8px] text-gray-300 w-4 text-right shrink-0">{pct}%</span>
+                    <div className="flex-1 border-t border-dashed border-gray-100" />
                   </div>
-                );
-              })}
+                ))}
+              </div>
+
+              <div className="flex items-end gap-1.5 pl-6 border-b border-gray-200" style={{ height: 152 }}>
+                {weekData.map((day) => {
+                  const total = day.carbs + day.protein + day.fat;
+                  const BAR_MAX_PX = 120; // 라벨 영역 제외한 최대 막대 높이(px)
+                  const barPx = day.empty ? 0 : Math.max(Math.round((total / maxMacro) * BAR_MAX_PX), 6);
+                  return (
+                    <div key={day.label} className="flex-1 flex flex-col items-center gap-1.5">
+                      <div
+                        className="w-full flex flex-col-reverse rounded-t overflow-hidden transition-all duration-500"
+                        style={{ height: barPx }}
+                        title={day.empty ? "" : `탄${day.carbs}g 단${day.protein}g 지${day.fat}g`}
+                      >
+                        {!day.empty && total > 0 && (
+                          <>
+                            <div style={{ flex: day.carbs   }} className="bg-orange-400" />
+                            <div style={{ flex: day.protein }} className="bg-blue-500" />
+                            <div style={{ flex: day.fat     }} className="bg-purple-400" />
+                          </>
+                        )}
+                      </div>
+                      <span className={`text-[10px] font-medium ${day.empty ? "text-gray-300" : "text-text-light"}`}>
+                        {day.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* 수치 요약 */}
-            <div className="mt-3 grid grid-cols-7 gap-1">
+            <div className="mt-2 grid grid-cols-7 gap-1 pl-6">
               {weekData.map((day) => (
                 <div key={day.label} className="text-center">
                   {!day.empty ? (
                     <p className="text-[9px] text-text-light leading-tight">
-                      {day.carbs+day.protein+day.fat}g
+                      {day.carbs + day.protein + day.fat}g
                     </p>
                   ) : (
                     <p className="text-[9px] text-gray-200">—</p>

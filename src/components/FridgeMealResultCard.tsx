@@ -8,16 +8,27 @@ const mealTimeIcons: Record<string, string> = {
   저녁: "🌙",
 };
 
+const roleConfig: Record<string, { label: string; color: string }> = {
+  main: { label: "메인반찬", color: "bg-primary/10 text-primary border-primary/20" },
+  side: { label: "반찬",     color: "bg-secondary/10 text-secondary border-secondary/20" },
+  soup: { label: "국",       color: "bg-blue-50 text-blue-600 border-blue-200" },
+};
+
 interface Props {
   result: FridgeMealResult;
 }
 
 export default function FridgeMealResultCard({ result }: Props) {
-  const { mealTime, menuName, ingredients, steps, tip, stageName, months, childLabel, skipped, hasUsableIngredients } = result;
+  const {
+    mealTime, menuName, ingredients, stageName, months, childLabel,
+    skipped, hasUsableIngredients, dishes,
+  } = result;
   const icon = mealTimeIcons[mealTime] ?? "🍽️";
+  const isOlderStage = ["완료기 이유식", "유아식", "일반 유아식"].includes(stageName);
 
   return (
     <div className="w-full rounded-2xl bg-white border border-border shadow-sm overflow-hidden">
+
       {/* 사용 불가 재료 경고 */}
       {skipped.length > 0 && (
         <div className="px-5 py-3 bg-amber-50 border-b border-amber-100">
@@ -58,16 +69,34 @@ export default function FridgeMealResultCard({ result }: Props) {
         </div>
       </div>
 
-      {/* 메뉴명 */}
+      {/* 오늘의 식단 요약 */}
       <div className="px-5 py-4 border-b border-border">
-        <p className="text-xs text-text-light mb-1">오늘의 메뉴</p>
-        <p className="text-xl font-bold text-text">{menuName}</p>
+        <p className="text-xs text-text-light mb-2">오늘의 식단</p>
+        <div className="flex flex-wrap gap-1.5">
+          {/* 밥 (완료기이유식+ 단계만) */}
+          {isOlderStage && (
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-600 border border-orange-200">
+              🍚 밥
+            </span>
+          )}
+          {dishes.map((dish, i) => {
+            const cfg = roleConfig[dish.role];
+            return (
+              <span
+                key={i}
+                className={`px-3 py-1 rounded-full text-xs font-semibold border ${cfg.color}`}
+              >
+                {dish.name}
+              </span>
+            );
+          })}
+        </div>
       </div>
 
-      {/* 재료 */}
+      {/* 사용 재료 */}
       <div className="px-5 py-4 border-b border-border">
         <p className="text-xs font-semibold text-text-light uppercase tracking-wide mb-2">
-          재료
+          사용 재료
         </p>
         <div className="flex flex-wrap gap-2">
           {ingredients.map((ing, i) => (
@@ -81,29 +110,45 @@ export default function FridgeMealResultCard({ result }: Props) {
         </div>
       </div>
 
-      {/* 조리 순서 */}
-      <div className="px-5 py-4">
-        <p className="text-xs font-semibold text-text-light uppercase tracking-wide mb-3">
-          만드는 방법
-        </p>
-        <ol className="flex flex-col gap-2">
-          {steps.map((step, i) => (
-            <li key={i} className="flex gap-2 text-sm text-text leading-relaxed">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center mt-0.5">
-                {i + 1}
+      {/* 각 반찬별 조리법 */}
+      {dishes.map((dish, idx) => {
+        const cfg = roleConfig[dish.role];
+        const isLast = idx === dishes.length - 1;
+        return (
+          <div
+            key={idx}
+            className={`px-5 py-4 ${!isLast ? "border-b border-border" : ""}`}
+          >
+            {/* 반찬 헤더 */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${cfg.color}`}>
+                {cfg.label}
               </span>
-              <span>{step}</span>
-            </li>
-          ))}
-        </ol>
+              <p className="text-base font-bold text-text">{dish.name}</p>
+            </div>
 
-        {tip && (
-          <div className="mt-4 p-3 rounded-xl bg-accent/10 border border-accent/20">
-            <p className="text-xs text-accent font-semibold mb-0.5">Tip</p>
-            <p className="text-xs text-text-light leading-relaxed">{tip}</p>
+            {/* 조리 순서 */}
+            <ol className="flex flex-col gap-2">
+              {dish.steps.map((step, j) => (
+                <li key={j} className="flex gap-2 text-sm text-text leading-relaxed">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center mt-0.5">
+                    {j + 1}
+                  </span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+
+            {/* Tip */}
+            {dish.tip && (
+              <div className="mt-3 p-3 rounded-xl bg-accent/10 border border-accent/20">
+                <p className="text-xs text-accent font-semibold mb-0.5">Tip</p>
+                <p className="text-xs text-text-light leading-relaxed">{dish.tip}</p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        );
+      })}
     </div>
   );
 }
