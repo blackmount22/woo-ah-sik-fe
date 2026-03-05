@@ -2,7 +2,56 @@
 
 import { useState } from "react";
 
-type ModalType = "privacy" | "terms" | null;
+type ModalType = "privacy" | "terms" | "guide" | null;
+
+const CLOSE_ICON = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const STAGES = [
+  { stage: "모유/분유기", months: "0~3개월", icon: "🍼", features: ["분유량 자동 계산 (체중 입력 필요)"] },
+  { stage: "초기 이유식", months: "4~5개월", icon: "🥣", features: ["주간 식단표", "월간 식단표", "냉장고 파먹기"] },
+  { stage: "중기 이유식", months: "6~7개월", icon: "🥣", features: ["주간 식단표", "월간 식단표", "냉장고 파먹기"] },
+  { stage: "후기 이유식", months: "8~9개월", icon: "🍚", features: ["주간 식단표", "월간 식단표", "냉장고 파먹기"] },
+  { stage: "완료기 이유식", months: "10~11개월", icon: "🍚", features: ["주간 식단표", "월간 식단표", "냉장고 파먹기"] },
+  { stage: "유아식", months: "12~35개월", icon: "🍱", features: ["주간 식단표", "월간 식단표", "냉장고 파먹기"] },
+  { stage: "일반 유아식", months: "36개월 이상", icon: "🍱", features: ["주간 식단표", "월간 식단표", "냉장고 파먹기"] },
+];
+
+const FEATURES = [
+  {
+    icon: "📅",
+    title: "주간 식단표",
+    desc: "이번 주 7일간의 아침·점심·저녁 식단을 자동으로 생성해요. 각 메뉴를 탭하면 레시피 검색 또는 유튜브 영상으로 바로 연결됩니다.",
+  },
+  {
+    icon: "📆",
+    title: "월간 식단표",
+    desc: "이번 달 전체 식단을 달력 형태로 한눈에 볼 수 있어요.",
+  },
+  {
+    icon: "🍼",
+    title: "분유량 계산",
+    desc: "모유/분유기 아기의 체중을 입력하면 하루 권장 분유량과 수유 횟수를 자동으로 계산해드려요.",
+  },
+  {
+    icon: "🧊",
+    title: "냉장고 파먹기",
+    desc: "냉장고에 있는 재료를 직접 입력하면, 아이 발달 단계에 맞는 맞춤 반찬·레시피를 즉석에서 만들어드려요.",
+  },
+  {
+    icon: "🖨️",
+    title: "출력 · 공유",
+    desc: "완성된 식단표를 이미지로 저장하거나 카카오톡·링크로 공유할 수 있어요.",
+  },
+  {
+    icon: "👨‍👩‍👧‍👦",
+    title: "다자녀 통합 관리",
+    desc: "최대 4명의 자녀를 동시에 입력하면 각 아이의 발달 단계에 맞는 식단을 한 번에 확인할 수 있어요. 같은 단계의 아이는 통합 식단으로 제공됩니다.",
+  },
+];
 
 export default function SiteFooter() {
   const [modal, setModal] = useState<ModalType>(null);
@@ -11,7 +60,15 @@ export default function SiteFooter() {
     <>
       <footer className="w-full mt-12 pb-8 px-4 flex flex-col items-center gap-3">
         {/* 링크 행 */}
-        <div className="flex items-center gap-4 text-xs text-text-light">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-text-light">
+          <button
+            type="button"
+            onClick={() => setModal("guide")}
+            className="hover:text-primary transition-colors underline underline-offset-2"
+          >
+            서비스 사용법
+          </button>
+          <span className="text-border">|</span>
           <button
             type="button"
             onClick={() => setModal("privacy")}
@@ -34,7 +91,6 @@ export default function SiteFooter() {
             className="flex items-center gap-1 hover:text-primary transition-colors"
             title="이메일 문의"
           >
-            {/* Mail icon */}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2" />
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
@@ -61,6 +117,119 @@ export default function SiteFooter() {
         </p>
       </footer>
 
+      {/* ── 서비스 사용법 모달 ── */}
+      {modal === "guide" && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
+          onClick={() => setModal(null)}
+        >
+          <div
+            className="bg-white w-full sm:max-w-md max-h-[88vh] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 헤더 */}
+            <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h2 className="text-base font-bold text-text">📖 서비스 사용법</h2>
+              <button
+                type="button"
+                onClick={() => setModal(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition-all"
+              >
+                {CLOSE_ICON}
+              </button>
+            </div>
+
+            {/* 본문 */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6 text-sm text-text-light leading-relaxed">
+
+              {/* 사용 순서 */}
+              <section>
+                <h3 className="font-bold text-text mb-3">사용 순서</h3>
+                <ol className="space-y-3">
+                  {[
+                    { step: "1", title: "자녀 수 선택", desc: "화면 상단에서 자녀 수를 선택하세요. 최대 4명까지 한 번에 입력할 수 있어요." },
+                    { step: "2", title: "생년월일 입력", desc: "각 아이의 생년월일을 입력하세요. 개월 수를 자동으로 계산해 적합한 단계를 판별합니다." },
+                    { step: "3", title: "체중 입력 (분유기만)", desc: "모유/분유기 아기는 체중을 함께 입력해야 분유량을 계산할 수 있어요." },
+                    { step: "4", title: "시작하기 클릭", desc: "버튼을 누르면 식단 생성 방식을 선택하는 팝업이 나타납니다." },
+                    { step: "5", title: "식단 확인", desc: "아이 단계에 맞는 식단표 또는 분유량이 자동으로 표시됩니다." },
+                  ].map(({ step, title, desc }) => (
+                    <li key={step} className="flex gap-3">
+                      <span className="shrink-0 w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center">
+                        {step}
+                      </span>
+                      <div>
+                        <p className="font-semibold text-text">{title}</p>
+                        <p className="text-xs mt-0.5">{desc}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+
+              {/* 단계별 제공 기능 */}
+              <section>
+                <h3 className="font-bold text-text mb-3">단계별 제공 기능</h3>
+                <div className="space-y-2">
+                  {STAGES.map(({ stage, months, icon, features }) => (
+                    <div key={stage} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                      <span className="text-xl shrink-0">{icon}</span>
+                      <div className="min-w-0">
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <span className="font-semibold text-text text-sm">{stage}</span>
+                          <span className="text-xs text-gray-400">{months}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {features.map((f) => (
+                            <span
+                              key={f}
+                              className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium"
+                            >
+                              {f}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 주요 기능 설명 */}
+              <section>
+                <h3 className="font-bold text-text mb-3">주요 기능 안내</h3>
+                <div className="space-y-3">
+                  {FEATURES.map(({ icon, title, desc }) => (
+                    <div key={title} className="flex gap-3">
+                      <span className="text-lg shrink-0">{icon}</span>
+                      <div>
+                        <p className="font-semibold text-text">{title}</p>
+                        <p className="text-xs mt-0.5">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 안내 문구 */}
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-100 text-xs text-amber-700 leading-relaxed">
+                제공되는 식단은 일반적인 이유식 가이드라인 기반의 참고 정보입니다. 아이의 건강 상태에 따라 소아과 의사 또는 영양사와 상담하시기 바랍니다.
+              </div>
+            </div>
+
+            {/* 하단 버튼 */}
+            <div className="shrink-0 px-5 py-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setModal(null)}
+                className="w-full py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-dark transition-all active:scale-[0.98]"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── 개인정보 처리방침 모달 ── */}
       {modal === "privacy" && (
         <div
@@ -78,9 +247,7 @@ export default function SiteFooter() {
                 onClick={() => setModal(null)}
                 className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition-all"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                {CLOSE_ICON}
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5 text-sm text-text-light leading-relaxed">
@@ -142,9 +309,7 @@ export default function SiteFooter() {
                 onClick={() => setModal(null)}
                 className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition-all"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                {CLOSE_ICON}
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5 text-sm text-text-light leading-relaxed">

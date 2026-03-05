@@ -12,6 +12,7 @@ import SiteFooter from "@/components/SiteFooter";
 import InstallButton from "@/components/InstallButton";
 import FridgeMealModal from "@/components/FridgeMealModal";
 import FridgeMealResultCard from "@/components/FridgeMealResultCard";
+import TodayMenuModal from "@/components/TodayMenuModal";
 import {
   calcMonths,
   getStage,
@@ -207,6 +208,9 @@ export default function HomeClient() {
   const [hydrated, setHydrated] = useState(false);
   const [futureDateAlert, setFutureDateAlert] = useState<string | null>(null);
   const skipSave = useRef(false);
+
+  // 오늘의 추천 메뉴 모달
+  const [showTodayMenu, setShowTodayMenu] = useState(false);
 
   // 냉장고 파먹기 관련 상태
   const [showModeModal, setShowModeModal] = useState(false);
@@ -576,6 +580,17 @@ export default function HomeClient() {
           </div>
         </div>
 
+        {/* 오늘의 추천 메뉴 버튼 */}
+        <button
+          type="button"
+          onClick={() => setShowTodayMenu(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-all active:scale-[0.97]"
+        >
+          <span>✨</span>
+          오늘의 추천 메뉴
+          <span className="text-amber-400">›</span>
+        </button>
+
         {/* 서비스 소개 */}
         <p className="text-center text-text-light leading-relaxed text-sm">
           우리 아이의 나이에 맞는
@@ -691,6 +706,11 @@ export default function HomeClient() {
             onConfirm={handleFridgeConfirm}
             onClose={() => setShowFridgeModal(false)}
           />
+        )}
+
+        {/* 오늘의 추천 메뉴 모달 */}
+        {showTodayMenu && (
+          <TodayMenuModal onClose={() => setShowTodayMenu(false)} />
         )}
 
         {/* 미래 날짜 알림 모달 */}

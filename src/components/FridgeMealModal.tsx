@@ -39,7 +39,7 @@ export default function FridgeMealModal({ onConfirm, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4 pb-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl flex flex-col max-h-[90vh] overflow-x-hidden">
         {/* 헤더 */}
         <div className="p-5 border-b border-border">
           <div className="text-3xl mb-1">🧊</div>
@@ -75,7 +75,7 @@ export default function FridgeMealModal({ onConfirm, onClose }: Props) {
               type="button"
               onClick={addIngredient}
               disabled={!nameInput.trim()}
-              className="px-3 py-2 rounded-xl bg-primary text-white text-sm font-bold disabled:bg-border disabled:text-text-light transition-all active:scale-[0.97]"
+              className="shrink-0 whitespace-nowrap px-3 py-2 rounded-xl bg-primary text-white text-sm font-bold disabled:bg-border disabled:text-text-light transition-all active:scale-[0.97]"
             >
               추가
             </button>
