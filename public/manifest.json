@@ -3,10 +3,13 @@
   "short_name": "우아식",
   "description": "우리 아이의 건강한 식단을 관리해보세요",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#FFF9F5",
   "theme_color": "#FF6B6B",
   "orientation": "portrait",
+  "lang": "ko",
   "icons": [
     {
       "src": "/icons/icon-192.png",
