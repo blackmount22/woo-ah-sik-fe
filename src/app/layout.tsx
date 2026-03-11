@@ -42,12 +42,21 @@ export const metadata: Metadata = {
     siteName: "우아식",
     locale: "ko_KR",
     type: "website",
+    images: [
+      {
+        url: "https://wooahsik.com/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "우아식 - 우리아이식단",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "우아식 - 우리아이식단 | 이유식 식단표 자동 생성",
     description:
       "아이의 생년월일을 입력하면 이유식 단계에 맞는 주간·월간 식단표와 분유량을 자동으로 계산해드립니다.",
+    images: ["https://wooahsik.com/og-image.png"],
   },
 };
 
