@@ -1,17 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 192 192">
   <rect width="192" height="192" rx="32" fill="#FF6B6B"/>
-  <path d="M 60 44 C 58 70 71 85 96 87 C 121 85 134 70 132 44 Z" fill="white"/>
-  <ellipse cx="96" cy="44" rx="36" ry="9" fill="#FF6B6B"/>
-  <ellipse cx="96" cy="44" rx="36" ry="9" fill="none" stroke="white" stroke-width="5"/>
-  <circle cx="86" cy="43" r="3" fill="white" opacity="0.75"/>
-  <circle cx="96" cy="40" r="2.5" fill="white" opacity="0.75"/>
-  <circle cx="106" cy="43" r="3" fill="white" opacity="0.75"/>
-  <rect x="84" y="85" width="24" height="5" rx="2.5" fill="white"/>
-  <rect x="77" y="89" width="38" height="4" rx="2" fill="white"/>
-  <line x1="44" y1="126" x2="148" y2="126" stroke="white" stroke-width="6.5" stroke-linecap="round"/>
-  <line x1="96" y1="126" x2="96" y2="168" stroke="white" stroke-width="6.5" stroke-linecap="round"/>
-  <line x1="53" y1="126" x2="51" y2="108" stroke="white" stroke-width="5" stroke-linecap="round"/>
-  <line x1="65" y1="126" x2="63" y2="104" stroke="white" stroke-width="5" stroke-linecap="round"/>
-  <line x1="77" y1="126" x2="75" y2="108" stroke="white" stroke-width="5" stroke-linecap="round"/>
-  <ellipse cx="129" cy="112" rx="16" ry="12" fill="white"/>
+
+  <!-- Baby Spoon (LEFT, center x=64) -->
+  <!-- Large round bowl -->
+  <circle cx="64" cy="50" r="26" fill="white"/>
+  <!-- Neck (bridges bowl to handle) -->
+  <rect x="57" y="70" width="14" height="10" fill="white"/>
+  <!-- Handle (paddle shape, wider at bottom) -->
+  <path d="M 57,78 C 51,105 47,138 51,160 Q 64,173 77,160 C 81,138 77,105 71,78 Z" fill="white"/>
+
+  <!-- Baby Fork (RIGHT, center x=128) -->
+  <!-- 4 tines: outer ones shorter, inner ones taller -->
+  <rect x="106" y="34" width="9" height="54" rx="4.5" fill="white"/>
+  <rect x="119" y="27" width="9" height="61" rx="4.5" fill="white"/>
+  <rect x="132" y="27" width="9" height="61" rx="4.5" fill="white"/>
+  <rect x="145" y="34" width="9" height="54" rx="4.5" fill="white"/>
+  <!-- Base connecting tines -->
+  <rect x="103" y="85" width="54" height="14" rx="7" fill="white"/>
+  <!-- Handle (paddle shape) -->
+  <path d="M 121,97 C 115,122 111,152 115,163 Q 128,175 141,163 C 145,152 141,122 135,97 Z" fill="white"/>
 </svg>

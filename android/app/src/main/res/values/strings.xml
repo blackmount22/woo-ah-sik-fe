@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">wooahsik</string>
+    <string name="title_activity_main">wooahsik</string>
+    <string name="package_name">com.wooahsik.app</string>
+    <string name="custom_url_scheme">com.wooahsik.app</string>
+</resources>
