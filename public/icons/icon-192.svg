@@ -7,10 +7,10 @@
   <path d="M 57,78 C 51,105 47,138 51,160 Q 64,173 77,160 C 81,138 77,105 71,78 Z" fill="white"/>
 
   <!-- Baby Fork (RIGHT, center x=128) -->
-  <rect x="106" y="34" width="9" height="54" rx="4.5" fill="white"/>
-  <rect x="119" y="27" width="9" height="61" rx="4.5" fill="white"/>
-  <rect x="132" y="27" width="9" height="61" rx="4.5" fill="white"/>
-  <rect x="145" y="34" width="9" height="54" rx="4.5" fill="white"/>
-  <rect x="103" y="85" width="54" height="14" rx="7" fill="white"/>
-  <path d="M 121,97 C 115,122 111,152 115,163 Q 128,175 141,163 C 145,152 141,122 135,97 Z" fill="white"/>
+  <rect x="108" y="28" width="6" height="60" rx="3" fill="white"/>
+  <rect x="120" y="22" width="6" height="66" rx="3" fill="white"/>
+  <rect x="132" y="22" width="6" height="66" rx="3" fill="white"/>
+  <rect x="144" y="28" width="6" height="60" rx="3" fill="white"/>
+  <path d="M 105,86 Q 105,100 114,100 L 142,100 Q 151,100 151,86 Z" fill="white"/>
+  <path d="M 121,98 C 115,122 111,152 115,163 Q 128,175 141,163 C 145,152 141,122 135,98 Z" fill="white"/>
 </svg>

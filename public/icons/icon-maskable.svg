@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 192 192">
-  <!-- maskable: 배경 full-bleed, safe zone 내에 디자인 -->
+  <!-- maskable: 배경 full-bleed -->
   <rect width="192" height="192" fill="#FF6B6B"/>
 
   <!-- Baby Spoon (LEFT, center x=64) -->
@@ -8,10 +8,10 @@
   <path d="M 57,78 C 52,104 48,136 52,157 Q 64,169 76,157 C 80,136 76,104 71,78 Z" fill="white"/>
 
   <!-- Baby Fork (RIGHT, center x=128) -->
-  <rect x="107" y="36" width="9" height="52" rx="4.5" fill="white"/>
-  <rect x="120" y="30" width="9" height="58" rx="4.5" fill="white"/>
-  <rect x="133" y="30" width="9" height="58" rx="4.5" fill="white"/>
-  <rect x="146" y="36" width="9" height="52" rx="4.5" fill="white"/>
-  <rect x="104" y="85" width="54" height="13" rx="6.5" fill="white"/>
-  <path d="M 122,96 C 116,120 112,149 116,160 Q 128,171 140,160 C 144,149 140,120 134,96 Z" fill="white"/>
+  <rect x="108" y="30" width="6" height="58" rx="3" fill="white"/>
+  <rect x="120" y="24" width="6" height="64" rx="3" fill="white"/>
+  <rect x="132" y="24" width="6" height="64" rx="3" fill="white"/>
+  <rect x="144" y="30" width="6" height="58" rx="3" fill="white"/>
+  <path d="M 105,86 Q 105,99 114,99 L 142,99 Q 151,99 151,86 Z" fill="white"/>
+  <path d="M 121,97 C 115,120 111,149 115,160 Q 128,171 141,160 C 145,149 141,120 135,97 Z" fill="white"/>
 </svg>
