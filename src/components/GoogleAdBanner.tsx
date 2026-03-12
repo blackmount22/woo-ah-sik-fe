@@ -21,9 +21,9 @@ export default function GoogleAdBanner() {
     <div className="w-full flex justify-center mt-4">
       <ins
         className="adsbygoogle"
-        style={{ display: "block" }}
+        style={{ display: "block", minHeight: "100px" }}
         data-ad-client="ca-pub-6924139569926505"
-        data-ad-slot="auto"
+        data-ad-slot="6498299319"
         data-ad-format="auto"
         data-full-width-responsive="true"
       />

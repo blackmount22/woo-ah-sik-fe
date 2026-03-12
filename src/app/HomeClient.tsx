@@ -643,7 +643,6 @@ export default function HomeClient() {
         </button>
 
         <KakaoAdBanner />
-        <GoogleAdBanner />
 
         {/* 모드 선택 모달 */}
         {showModeModal && (
