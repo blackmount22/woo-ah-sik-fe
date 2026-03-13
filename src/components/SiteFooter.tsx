@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 type ModalType = "privacy" | "terms" | "guide" | "intro" | null;
 
@@ -182,13 +183,12 @@ export default function SiteFooter() {
           >
             서비스 사용법
           </button>
-          <button
-            type="button"
-            onClick={() => setModal("privacy")}
+          <Link
+            href="/policy"
             className="text-left hover:text-primary transition-colors underline underline-offset-2"
           >
             개인정보 처리방침
-          </button>
+          </Link>
           <button
             type="button"
             onClick={() => setModal("terms")}
