@@ -461,6 +461,17 @@ export default function HomeClient() {
             <div className="mt-2">
               <InstallButton />
             </div>
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setShowTodayMenu(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-all active:scale-[0.97] mx-auto"
+              >
+                <span>✨</span>
+                오늘의 추천 메뉴
+                <span className="text-amber-400">›</span>
+              </button>
+            </div>
           </div>
 
           {/* 타이틀 */}
@@ -505,6 +516,9 @@ export default function HomeClient() {
           <GoogleAdBanner />
         </main>
         <SiteFooter />
+        {showTodayMenu && (
+          <TodayMenuModal onClose={() => setShowTodayMenu(false)} />
+        )}
       </div>
     );
   }
@@ -521,6 +535,17 @@ export default function HomeClient() {
             <p className="mt-1 text-sm text-text-light">우리아이 식단표</p>
             <div className="mt-2">
               <InstallButton />
+            </div>
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setShowTodayMenu(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-all active:scale-[0.97] mx-auto"
+              >
+                <span>✨</span>
+                오늘의 추천 메뉴
+                <span className="text-amber-400">›</span>
+              </button>
             </div>
           </div>
 
@@ -562,6 +587,9 @@ export default function HomeClient() {
           <GoogleAdBanner />
         </main>
         <SiteFooter />
+        {showTodayMenu && (
+          <TodayMenuModal onClose={() => setShowTodayMenu(false)} />
+        )}
       </div>
     );
   }

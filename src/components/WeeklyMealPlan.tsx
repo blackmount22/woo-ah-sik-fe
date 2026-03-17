@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { DayMeal, Stage, MonthPlan, MonthDayMeal } from "@/lib/mealPlan";
 import { getRecipe } from "@/lib/recipes";
 import type { Recipe } from "@/lib/recipes";
@@ -29,6 +29,14 @@ interface WeeklyMealPlanProps {
 }
 
 type ViewMode = "weekly" | "monthly";
+type EatStatus = "완밥" | "보통" | "거부";
+type EatRecords = Record<string, EatStatus>; // key: `${year}_${month}_${date}_${mealType}`
+
+const EAT_STATUS_CONFIG: Record<EatStatus, { emoji: string; color: string; bgActive: string }> = {
+  완밥: { emoji: "😊", color: "text-green-700 border-green-200 bg-green-50",  bgActive: "bg-green-500 text-white border-green-500" },
+  보통: { emoji: "😐", color: "text-yellow-700 border-yellow-200 bg-yellow-50", bgActive: "bg-yellow-400 text-white border-yellow-400" },
+  거부: { emoji: "😢", color: "text-red-600 border-red-200 bg-red-50",     bgActive: "bg-red-400 text-white border-red-400" },
+};
 
 const dayNames = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -96,6 +104,34 @@ export default function WeeklyMealPlan({
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showShoppingModal, setShowShoppingModal] = useState(false);
   const [showNutritionModal, setShowNutritionModal] = useState(false);
+  const [eatRecords, setEatRecords] = useState<EatRecords>({});
+
+  // 완밥 기록 로컬스토리지 로드
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`wooahsik_eat_${childLabel}`);
+      if (stored) setEatRecords(JSON.parse(stored));
+    } catch { /* ignore */ }
+  }, [childLabel]);
+
+  const handleEatRecord = (date: number, mealType: string, status: EatStatus | null) => {
+    if (!monthlyPlan) return;
+    const key = `${monthlyPlan.year}_${monthlyPlan.month}_${date}_${mealType}`;
+    setEatRecords((prev) => {
+      const next = { ...prev };
+      if (status === null) delete next[key];
+      else next[key] = status;
+      try {
+        localStorage.setItem(`wooahsik_eat_${childLabel}`, JSON.stringify(next));
+      } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  const getEatStatus = (date: number, mealType: string): EatStatus | undefined => {
+    if (!monthlyPlan) return undefined;
+    return eatRecords[`${monthlyPlan.year}_${monthlyPlan.month}_${date}_${mealType}`];
+  };
 
   // 월간 데이터를 주 단위로 분할
   const monthWeeks = useMemo(
@@ -362,6 +398,8 @@ export default function WeeklyMealPlan({
                       type="아침"
                       menu={selectedDayMeal.breakfast}
                       onClick={handleMealClick}
+                      eatStatus={getEatStatus(selectedDate, "아침")}
+                      onEatRecord={(s) => handleEatRecord(selectedDate, "아침", s)}
                     />
                   )}
                   {selectedDayMeal.lunch && (
@@ -369,6 +407,8 @@ export default function WeeklyMealPlan({
                       type="점심"
                       menu={selectedDayMeal.lunch}
                       onClick={handleMealClick}
+                      eatStatus={getEatStatus(selectedDate, "점심")}
+                      onEatRecord={(s) => handleEatRecord(selectedDate, "점심", s)}
                     />
                   )}
                   {selectedDayMeal.dinner && (
@@ -376,6 +416,8 @@ export default function WeeklyMealPlan({
                       type="저녁"
                       menu={selectedDayMeal.dinner}
                       onClick={handleMealClick}
+                      eatStatus={getEatStatus(selectedDate, "저녁")}
+                      onEatRecord={(s) => handleEatRecord(selectedDate, "저녁", s)}
                     />
                   )}
                   {selectedDayMeal.snack && (
@@ -383,10 +425,57 @@ export default function WeeklyMealPlan({
                       type="간식"
                       menu={selectedDayMeal.snack}
                       onClick={handleMealClick}
+                      eatStatus={getEatStatus(selectedDate, "간식")}
+                      onEatRecord={(s) => handleEatRecord(selectedDate, "간식", s)}
                     />
                   )}
                 </div>
               )}
+
+              {/* 이번 주 완밥 통계 */}
+              {monthlyPlan && (() => {
+                const weekDates = currentWeek
+                  .filter((d): d is MonthDayMeal => d !== null)
+                  .map((d) => d.date);
+                const mealTypes = ["아침", "점심", "저녁", "간식"];
+                const allKeys = weekDates.flatMap((date) =>
+                  mealTypes
+                    .filter((mt) => {
+                      const dayMeal = monthlyPlan.days.find((d) => d.date === date);
+                      if (!dayMeal) return false;
+                      const map: Record<string, string | undefined> = {
+                        아침: dayMeal.breakfast, 점심: dayMeal.lunch,
+                        저녁: dayMeal.dinner, 간식: dayMeal.snack,
+                      };
+                      return !!map[mt];
+                    })
+                    .map((mt) => `${monthlyPlan.year}_${monthlyPlan.month}_${date}_${mt}`)
+                );
+                const recorded = allKeys.filter((k) => eatRecords[k]);
+                const counts = {
+                  완밥: recorded.filter((k) => eatRecords[k] === "완밥").length,
+                  보통: recorded.filter((k) => eatRecords[k] === "보통").length,
+                  거부: recorded.filter((k) => eatRecords[k] === "거부").length,
+                };
+                if (recorded.length === 0) return null;
+                return (
+                  <div className="mt-4 p-4 rounded-2xl bg-white border border-border">
+                    <p className="text-xs font-bold text-text mb-3 flex items-center gap-1.5">
+                      <span>📊</span> 이번 주 완밥 기록
+                      <span className="ml-auto text-text-light font-normal">{recorded.length}/{allKeys.length}끼 기록됨</span>
+                    </p>
+                    <div className="flex gap-2">
+                      {(["완밥", "보통", "거부"] as EatStatus[]).map((s) => (
+                        <div key={s} className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl border ${EAT_STATUS_CONFIG[s].color}`}>
+                          <span className="text-lg">{EAT_STATUS_CONFIG[s].emoji}</span>
+                          <span className="text-xs font-bold">{s}</span>
+                          <span className="text-base font-bold">{counts[s]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* 식재료 구매 + 영양 성분 버튼 */}
               {weekMeals.length > 0 && (
@@ -445,6 +534,8 @@ export default function WeeklyMealPlan({
                 onSelectDay={setSelectedDate}
                 selectedDayMeal={selectedDayMeal}
                 onMealClick={handleMealClick}
+                eatRecords={eatRecords}
+                onEatRecord={handleEatRecord}
               />
             )
           )}
@@ -503,6 +594,8 @@ function MonthlyCalendar({
   onSelectDay,
   selectedDayMeal,
   onMealClick,
+  eatRecords,
+  onEatRecord,
 }: {
   monthlyPlan: MonthPlan;
   monthWeeks: (MonthDayMeal | null)[][];
@@ -510,6 +603,8 @@ function MonthlyCalendar({
   onSelectDay: (day: number) => void;
   selectedDayMeal: MonthDayMeal | null;
   onMealClick: (menu: string) => void;
+  eatRecords: EatRecords;
+  onEatRecord: (date: number, mealType: string, status: EatStatus | null) => void;
 }) {
   const { year, month } = monthlyPlan;
 
@@ -549,6 +644,11 @@ function MonthlyCalendar({
 
           const isToday = isCurrentMonth && dayData.date === todayDate;
           const isSelected = dayData.date === selectedDay;
+          // 당일 완밥 기록 집계
+          const dayEatStatuses = (["아침", "점심", "저녁", "간식"] as const)
+            .map((mt) => eatRecords[`${monthlyPlan.year}_${monthlyPlan.month}_${dayData.date}_${mt}`])
+            .filter(Boolean) as EatStatus[];
+          const hasRecords = dayEatStatuses.length > 0;
 
           return (
             <button
@@ -563,16 +663,19 @@ function MonthlyCalendar({
                     : "border-border/40 bg-white hover:border-primary/20"
               }`}
             >
-              <div
-                className={`text-[10px] font-bold text-center mb-1 ${
-                  isSelected
-                    ? "text-primary"
-                    : isToday
-                      ? "text-primary"
-                      : "text-text"
-                }`}
-              >
-                {dayData.date}
+              <div className={`flex items-center justify-between mb-1 ${
+                isSelected ? "text-primary" : isToday ? "text-primary" : "text-text"
+              }`}>
+                <span className="text-[10px] font-bold">{dayData.date}</span>
+                {hasRecords && (
+                  <div className="flex gap-[2px]">
+                    {dayEatStatuses.slice(0, 3).map((s, i) => (
+                      <span key={i} className={`text-[8px] ${
+                        s === "완밥" ? "text-green-500" : s === "보통" ? "text-yellow-500" : "text-red-400"
+                      }`}>●</span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-[3px]">
                 {dayData.breakfast && (
@@ -628,6 +731,8 @@ function MonthlyCalendar({
                 type="아침"
                 menu={selectedDayMeal.breakfast}
                 onClick={onMealClick}
+                eatStatus={eatRecords[`${monthlyPlan.year}_${monthlyPlan.month}_${selectedDay}_아침`]}
+                onEatRecord={(s) => onEatRecord(selectedDay, "아침", s)}
               />
             )}
             {selectedDayMeal.lunch && (
@@ -635,6 +740,8 @@ function MonthlyCalendar({
                 type="점심"
                 menu={selectedDayMeal.lunch}
                 onClick={onMealClick}
+                eatStatus={eatRecords[`${monthlyPlan.year}_${monthlyPlan.month}_${selectedDay}_점심`]}
+                onEatRecord={(s) => onEatRecord(selectedDay, "점심", s)}
               />
             )}
             {selectedDayMeal.dinner && (
@@ -642,6 +749,8 @@ function MonthlyCalendar({
                 type="저녁"
                 menu={selectedDayMeal.dinner}
                 onClick={onMealClick}
+                eatStatus={eatRecords[`${monthlyPlan.year}_${monthlyPlan.month}_${selectedDay}_저녁`]}
+                onEatRecord={(s) => onEatRecord(selectedDay, "저녁", s)}
               />
             )}
             {selectedDayMeal.snack && (
@@ -649,6 +758,8 @@ function MonthlyCalendar({
                 type="간식"
                 menu={selectedDayMeal.snack}
                 onClick={onMealClick}
+                eatStatus={eatRecords[`${monthlyPlan.year}_${monthlyPlan.month}_${selectedDay}_간식`]}
+                onEatRecord={(s) => onEatRecord(selectedDay, "간식", s)}
               />
             )}
           </div>
@@ -664,10 +775,14 @@ function MealCard({
   type,
   menu,
   onClick,
+  eatStatus,
+  onEatRecord,
 }: {
   type: string;
   menu: string;
   onClick: (menu: string) => void;
+  eatStatus?: EatStatus;
+  onEatRecord?: (status: EatStatus | null) => void;
 }) {
   // " + " 로 분리된 다중 메뉴 지원
   const dishParts = menu.split(" + ");
@@ -756,6 +871,43 @@ function MealCard({
               {a.icon} {a.name}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* 완밥 기록 */}
+      {onEatRecord && (
+        <div
+          className="mt-3 pt-2.5 border-t border-black/5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {eatStatus ? (
+            <div className="flex items-center gap-2 pl-7">
+              <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border font-semibold ${EAT_STATUS_CONFIG[eatStatus].color}`}>
+                {EAT_STATUS_CONFIG[eatStatus].emoji} {eatStatus}
+              </span>
+              <button
+                type="button"
+                onClick={() => onEatRecord(null)}
+                className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                취소
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 pl-7 flex-wrap">
+              <span className="text-[10px] text-gray-400 mr-0.5 shrink-0">완밥 기록</span>
+              {(["완밥", "보통", "거부"] as EatStatus[]).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => onEatRecord(s)}
+                  className={`text-[11px] px-2.5 py-1 rounded-full border font-semibold transition-all hover:opacity-80 active:scale-95 ${EAT_STATUS_CONFIG[s].color}`}
+                >
+                  {EAT_STATUS_CONFIG[s].emoji} {s}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </button>
