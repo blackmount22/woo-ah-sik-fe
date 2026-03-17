@@ -14,32 +14,75 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://wooahsik.com"),
-  title: "우아식 - 우리아이식단 | 이유식 식단표 자동 생성",
+
+  // ── 타이틀: 검색량 높은 핵심 키워드를 앞에 배치 ──
+  title: {
+    default: "이유식 식단표 자동생성 · 분유량 계산 | 우아식",
+    template: "%s | 우아식",
+  },
+
+  // ── 설명: 130~150자, 핵심 키워드 자연스럽게 포함 ──
   description:
-    "아이의 생년월일을 입력하면 이유식 단계에 맞는 주간·월간 식단표와 분유량을 자동으로 계산해드립니다. 초기·중기·후기·완료기 이유식, 유아식까지 단계별 맞춤 식단과 냉장고 파먹기 레시피, 다자녀 통합 관리를 무료로 제공합니다.",
+    "생년월일 입력만으로 초기·중기·후기·완료기 이유식과 유아식 맞춤 식단표를 자동 생성해드려요. 분유량 계산, 냉장고 파먹기 레시피, 다자녀 통합 관리까지 완전 무료.",
+
+  // ── 키워드: 단계별 + 롱테일 키워드 확장 ──
   keywords: [
     "이유식",
     "이유식 식단표",
     "이유식 레시피",
+    "이유식 만들기",
     "이유식 계획표",
+    "이유식 단계",
+    "이유식 시작",
+    "이유식 재료",
+    "이유식 순서",
+    "이유식 추천",
     "초기 이유식",
+    "초기 이유식 식단",
     "중기 이유식",
+    "중기 이유식 식단",
     "후기 이유식",
+    "후기 이유식 식단",
     "완료기 이유식",
     "유아식",
+    "유아식 식단",
+    "유아식 레시피",
     "분유량 계산",
+    "분유 수유량",
     "아기 식단",
+    "아기 이유식",
     "냉장고 파먹기",
+    "맞춤 이유식",
+    "이유식 앱",
     "다자녀 식단",
-    "이유식 추천",
     "우아식",
   ],
+
+  // ── 크롤링 허용 ──
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+
+  // ── 저작자 ──
+  authors: [{ name: "우아식", url: "https://wooahsik.com" }],
+  creator: "우아식",
+  publisher: "우아식",
+
+  // ── Canonical ──
+  alternates: {
+    canonical: "https://wooahsik.com",
+    languages: { "ko-KR": "https://wooahsik.com" },
+  },
+
+  // ── Open Graph ──
   openGraph: {
-    title: "우아식 - 우리아이식단 | 이유식 식단표 자동 생성",
+    title: "이유식 식단표 자동생성 · 분유량 계산 | 우아식",
     description:
-      "아이의 생년월일을 입력하면 이유식 단계에 맞는 주간·월간 식단표와 분유량을 자동으로 계산해드립니다. 초기·중기·후기·완료기 이유식, 유아식까지 단계별 맞춤 식단과 냉장고 파먹기 레시피를 무료로 제공합니다.",
+      "생년월일 입력만으로 초기·중기·후기·완료기 이유식과 유아식 맞춤 식단표를 자동 생성해드려요. 분유량 계산, 냉장고 파먹기 레시피, 다자녀 통합 관리까지 완전 무료.",
     url: "https://wooahsik.com",
-    siteName: "우아식",
+    siteName: "우아식 - 맞춤형 이유식 식단",
     locale: "ko_KR",
     type: "website",
     images: [
@@ -47,15 +90,17 @@ export const metadata: Metadata = {
         url: "https://wooahsik.com/og-image.png",
         width: 1200,
         height: 630,
-        alt: "우아식 - 우리아이식단",
+        alt: "우아식 - 이유식 식단표 자동생성 서비스",
       },
     ],
   },
+
+  // ── Twitter / X ──
   twitter: {
     card: "summary_large_image",
-    title: "우아식 - 우리아이식단 | 이유식 식단표 자동 생성",
+    title: "이유식 식단표 자동생성 · 분유량 계산 | 우아식",
     description:
-      "아이의 생년월일을 입력하면 이유식 단계에 맞는 주간·월간 식단표와 분유량을 자동으로 계산해드립니다.",
+      "생년월일 입력만으로 맞춤 이유식 식단표와 분유량을 자동 계산해드려요. 초기~유아식, 냉장고 파먹기, 다자녀 관리 무료 제공.",
     images: ["https://wooahsik.com/og-image.png"],
   },
 };
@@ -82,20 +127,23 @@ export default function RootLayout({
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6924139569926505"
           crossOrigin="anonymous"
         />
-        {/* JSON-LD structured data */}
+        {/* JSON-LD: WebApplication */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebApplication",
-              name: "우아식 - 우리아이식단",
+              name: "우아식",
+              alternateName: "우리아이식단 우아식",
               url: "https://wooahsik.com",
               description:
-                "아이의 생년월일을 입력하면 이유식 발달 단계에 맞는 주간·월간 식단표와 분유량을 자동으로 계산해주는 무료 육아 도우미 서비스입니다. 초기·중기·후기·완료기 이유식, 유아식까지 단계별 맞춤 식단을 제공하며, 냉장고에 남은 재료로 맞춤 레시피를 생성하는 냉장고 파먹기 기능도 지원합니다.",
+                "생년월일 입력만으로 초기·중기·후기·완료기 이유식과 유아식 맞춤 식단표를 자동 생성하는 무료 육아 도우미 서비스. 분유량 계산, 냉장고 파먹기 레시피, 다자녀 통합 관리 제공.",
               applicationCategory: "HealthApplication",
+              applicationSubCategory: "육아·이유식",
               operatingSystem: "All",
-              inLanguage: "ko",
+              inLanguage: "ko-KR",
+              isAccessibleForFree: true,
               offers: {
                 "@type": "Offer",
                 price: "0",
@@ -111,16 +159,60 @@ export default function RootLayout({
                 "냉장고 재료 기반 맞춤 이유식 레시피",
                 "다자녀 통합 식단 관리 (최대 4명)",
                 "이유식 영양 성분 분석",
+                "이유식 식단표 출력 및 공유",
               ],
               audience: {
                 "@type": "Audience",
-                audienceType: "부모, 영유아 보호자",
+                audienceType: "부모, 영유아 보호자, 육아 중인 가정",
               },
-              keywords: "이유식,이유식 식단표,이유식 레시피,분유량 계산,유아식,냉장고 파먹기",
+              keywords: "이유식,이유식 식단표,이유식 만들기,초기 이유식,중기 이유식,후기 이유식,유아식,분유량 계산,냉장고 파먹기,맞춤 식단",
             }),
           }}
         />
-        {/* FAQ 구조화 데이터 */}
+        {/* JSON-LD: Organization */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "우아식",
+              url: "https://wooahsik.com",
+              logo: "https://wooahsik.com/icons/icon-512.png",
+              contactPoint: {
+                "@type": "ContactPoint",
+                email: "moongang1022@naver.com",
+                contactType: "customer support",
+                availableLanguage: "Korean",
+              },
+            }),
+          }}
+        />
+        {/* JSON-LD: BreadcrumbList */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                {
+                  "@type": "ListItem",
+                  position: 1,
+                  name: "홈",
+                  item: "https://wooahsik.com",
+                },
+                {
+                  "@type": "ListItem",
+                  position: 2,
+                  name: "이유식 식단표",
+                  item: "https://wooahsik.com",
+                },
+              ],
+            }),
+          }}
+        />
+        {/* JSON-LD: FAQPage */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -133,7 +225,15 @@ export default function RootLayout({
                   name: "이유식은 몇 개월부터 시작해야 하나요?",
                   acceptedAnswer: {
                     "@type": "Answer",
-                    text: "소아과 전문의들은 생후 4~6개월 사이에 이유식을 시작하도록 권장합니다. 아이가 목을 가눌 수 있고, 음식에 관심을 보이며, 음식을 혀로 밀어내는 반사가 줄어들었을 때가 적절한 시기입니다.",
+                    text: "소아과 전문의들은 생후 4~6개월 사이에 이유식을 시작하도록 권장합니다. 아이가 목을 가눌 수 있고, 음식에 관심을 보이며, 음식을 혀로 밀어내는 반사가 줄어들었을 때가 적절한 시기입니다. 우아식은 생년월일을 입력하면 현재 월령에 맞는 이유식 단계를 자동으로 판별해 드립니다.",
+                  },
+                },
+                {
+                  "@type": "Question",
+                  name: "초기·중기·후기·완료기 이유식 단계 구분은 어떻게 되나요?",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "초기 이유식은 4~5개월, 중기 이유식은 6~7개월, 후기 이유식은 8~9개월, 완료기 이유식은 10~11개월, 유아식은 12~35개월, 일반 유아식은 36개월 이상입니다. 우아식은 생년월일 기반으로 단계를 자동 계산합니다.",
                   },
                 },
                 {
@@ -141,7 +241,15 @@ export default function RootLayout({
                   name: "분유량은 어떻게 계산되나요?",
                   acceptedAnswer: {
                     "@type": "Answer",
-                    text: "우아식은 체중(kg) × 150ml를 하루 기준 분유량으로 계산하며, 월령에 따른 수유 횟수와 1회 적정량을 함께 안내합니다.",
+                    text: "우아식은 체중(kg) × 150ml를 하루 기준 분유량으로 계산하며, 월령에 따른 수유 횟수와 1회 적정량을 함께 안내합니다. 단, 아이마다 수유량 차이가 있으므로 소아과 의사와 상담하는 것을 권장합니다.",
+                  },
+                },
+                {
+                  "@type": "Question",
+                  name: "이유식 식단표를 자동으로 만들어주나요?",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "네, 아이의 생년월일을 입력하면 현재 이유식 단계에 맞는 주간·월간 식단표를 자동으로 생성해드립니다. 매번 새로 생성할 때마다 다양한 메뉴 조합으로 구성되어 균형 잡힌 식단을 제공합니다.",
                   },
                 },
                 {
@@ -149,15 +257,23 @@ export default function RootLayout({
                   name: "냉장고 파먹기 기능은 무엇인가요?",
                   acceptedAnswer: {
                     "@type": "Answer",
-                    text: "냉장고에 있는 재료를 직접 입력하면 아이의 발달 단계에 맞는 오늘의 맞춤 레시피를 즉석에서 생성해드립니다.",
+                    text: "냉장고에 있는 재료를 직접 입력하면 아이의 발달 단계에 맞는 오늘의 맞춤 이유식 레시피를 즉석에서 생성해드립니다. 남은 식재료를 활용해 아이에게 적합한 한 끼를 손쉽게 구성할 수 있어요.",
                   },
                 },
                 {
                   "@type": "Question",
-                  name: "여러 아이의 식단을 동시에 관리할 수 있나요?",
+                  name: "여러 아이의 이유식 식단을 동시에 관리할 수 있나요?",
                   acceptedAnswer: {
                     "@type": "Answer",
-                    text: "최대 4명의 자녀를 동시에 입력할 수 있으며, 각 아이의 발달 단계에 맞는 식단을 한 번에 확인할 수 있습니다.",
+                    text: "최대 4명의 자녀를 동시에 입력할 수 있으며, 각 아이의 발달 단계에 맞는 식단을 한 번에 확인할 수 있습니다. 비슷한 이유식 단계의 아이들은 통합 식단으로 함께 제공되어 더욱 편리하게 관리할 수 있습니다.",
+                  },
+                },
+                {
+                  "@type": "Question",
+                  name: "우아식은 무료로 사용할 수 있나요?",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "네, 우아식의 모든 기능(이유식 식단표 생성, 분유량 계산, 냉장고 파먹기, 다자녀 관리, 영양 성분 분석)은 완전 무료로 제공됩니다. 회원가입이나 앱 설치 없이 바로 사용하실 수 있습니다.",
                   },
                 },
               ],

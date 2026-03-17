@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "개인정보 처리방침 | 우아식",
-  description: "우아식 서비스의 개인정보 수집·이용·보관에 관한 방침을 안내합니다.",
+  title: "개인정보 처리방침",
+  description: "우아식 이유식 식단표 서비스의 개인정보 수집·이용·보관에 관한 방침을 안내합니다.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "https://wooahsik.com/policy" },
 };
 
 const SECTIONS = [
