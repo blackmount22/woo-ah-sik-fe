@@ -11,7 +11,7 @@ import type { CategoryGroup } from "@/lib/ingredients";
 import { calcWeekNutrition, weeklyVitaminAvg } from "@/lib/nutrition";
 import type { NutritionDayResult } from "@/lib/nutrition";
 import RecipeModal from "./RecipeModal";
-import NewMenuModal from "./NewMenuModal";
+
 
 interface UnifiedGroup {
   baseStageName: string;
@@ -105,7 +105,7 @@ export default function WeeklyMealPlan({
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showShoppingModal, setShowShoppingModal] = useState(false);
   const [showNutritionModal, setShowNutritionModal] = useState(false);
-  const [showNewMenuModal, setShowNewMenuModal] = useState(false);
+
   const [eatRecords, setEatRecords] = useState<EatRecords>({});
 
   // 완밥 기록 로컬스토리지 로드
@@ -211,13 +211,7 @@ export default function WeeklyMealPlan({
               통합 식단
             </span>
           )}
-          <button
-            type="button"
-            onClick={() => setShowNewMenuModal(true)}
-            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-violet-500 to-pink-400 text-white shadow-sm hover:shadow-md hover:from-violet-600 hover:to-pink-500 transition-all active:scale-95"
-          >
-            ✨ 새로 추가된 메뉴
-          </button>
+
         </div>
         {combinedChildren && unifiedGroup && (
           <p className="mt-1 text-xs text-accent">
@@ -591,10 +585,7 @@ export default function WeeklyMealPlan({
         />
       )}
 
-      {/* 새로 추가된 레시피 모달 */}
-      {showNewMenuModal && (
-        <NewMenuModal onClose={() => setShowNewMenuModal(false)} />
-      )}
+
     </div>
   );
 }

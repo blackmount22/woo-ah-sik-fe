@@ -13,6 +13,7 @@ import InstallButton from "@/components/InstallButton";
 import FridgeMealModal from "@/components/FridgeMealModal";
 import FridgeMealResultCard from "@/components/FridgeMealResultCard";
 import TodayMenuModal from "@/components/TodayMenuModal";
+import NewMenuModal from "@/components/NewMenuModal";
 import {
   calcMonths,
   getStage,
@@ -211,6 +212,7 @@ export default function HomeClient() {
 
   // 오늘의 추천 메뉴 모달
   const [showTodayMenu, setShowTodayMenu] = useState(false);
+  const [showNewMenuModal, setShowNewMenuModal] = useState(false);
 
   // 냉장고 파먹기 관련 상태
   const [showModeModal, setShowModeModal] = useState(false);
@@ -461,15 +463,22 @@ export default function HomeClient() {
             <div className="mt-2">
               <InstallButton />
             </div>
-            <div className="mt-3">
+            <div className="mt-3 flex items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={() => setShowTodayMenu(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-all active:scale-[0.97] mx-auto"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-all active:scale-[0.97]"
               >
                 <span>✨</span>
                 오늘의 추천 메뉴
                 <span className="text-amber-400">›</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowNewMenuModal(true)}
+                className="flex items-center gap-1 px-3 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-violet-500 to-pink-400 text-white shadow-sm hover:shadow-md hover:from-violet-600 hover:to-pink-500 transition-all active:scale-95"
+              >
+                ✨ 새로 추가된 메뉴
               </button>
             </div>
           </div>
@@ -536,15 +545,22 @@ export default function HomeClient() {
             <div className="mt-2">
               <InstallButton />
             </div>
-            <div className="mt-3">
+            <div className="mt-3 flex items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={() => setShowTodayMenu(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-all active:scale-[0.97] mx-auto"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-all active:scale-[0.97]"
               >
                 <span>✨</span>
                 오늘의 추천 메뉴
                 <span className="text-amber-400">›</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowNewMenuModal(true)}
+                className="flex items-center gap-1 px-3 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-violet-500 to-pink-400 text-white shadow-sm hover:shadow-md hover:from-violet-600 hover:to-pink-500 transition-all active:scale-95"
+              >
+                ✨ 새로 추가된 메뉴
               </button>
             </div>
           </div>
@@ -608,16 +624,25 @@ export default function HomeClient() {
           </div>
         </div>
 
-        {/* 오늘의 추천 메뉴 버튼 */}
-        <button
-          type="button"
-          onClick={() => setShowTodayMenu(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-all active:scale-[0.97]"
-        >
-          <span>✨</span>
-          오늘의 추천 메뉴
-          <span className="text-amber-400">›</span>
-        </button>
+        {/* 오늘의 추천 메뉴 / 새로 추가된 메뉴 버튼 */}
+        <div className="flex items-center gap-2 flex-wrap justify-center">
+          <button
+            type="button"
+            onClick={() => setShowTodayMenu(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-all active:scale-[0.97]"
+          >
+            <span>✨</span>
+            오늘의 추천 메뉴
+            <span className="text-amber-400">›</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowNewMenuModal(true)}
+            className="flex items-center gap-1 px-3 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-violet-500 to-pink-400 text-white shadow-sm hover:shadow-md hover:from-violet-600 hover:to-pink-500 transition-all active:scale-95"
+          >
+            ✨ 새로 추가된 메뉴
+          </button>
+        </div>
 
         {/* 서비스 소개 */}
         <p className="text-center text-text-light leading-relaxed text-sm">
@@ -738,6 +763,11 @@ export default function HomeClient() {
         {/* 오늘의 추천 메뉴 모달 */}
         {showTodayMenu && (
           <TodayMenuModal onClose={() => setShowTodayMenu(false)} />
+        )}
+
+        {/* 새로 추가된 메뉴 모달 */}
+        {showNewMenuModal && (
+          <NewMenuModal onClose={() => setShowNewMenuModal(false)} />
         )}
 
         {/* 미래 날짜 알림 모달 */}
