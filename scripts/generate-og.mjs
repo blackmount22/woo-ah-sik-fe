@@ -5,6 +5,16 @@ import { writeFileSync, existsSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
+// 빌드 실패 방지: OG 생성에 실패해도 next build는 계속 진행
+process.on("uncaughtException", (err) => {
+  console.error("⚠️  OG 이미지 생성 실패 (빌드는 계속 진행):", err.message);
+  process.exit(0);
+});
+process.on("unhandledRejection", (err) => {
+  console.error("⚠️  OG 이미지 생성 실패 (빌드는 계속 진행):", err);
+  process.exit(0);
+});
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(__dirname, "../public/og-image.png");
 
@@ -43,12 +53,16 @@ async function registerKoreanFont() {
   const url =
     "https://raw.githubusercontent.com/google/fonts/main/ofl/notosanskr/NotoSansKR%5Bwght%5D.ttf";
   console.log("⬇️  Downloading Noto Sans KR font...");
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Font download failed: ${res.status} ${url}`);
-  const buf = Buffer.from(await res.arrayBuffer());
-  writeFileSync(cachedPath, buf);
-  GlobalFonts.registerFromPath(cachedPath, "Korean");
-  console.log("✅ Noto Sans KR downloaded & registered");
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const buf = Buffer.from(await res.arrayBuffer());
+    writeFileSync(cachedPath, buf);
+    GlobalFonts.registerFromPath(cachedPath, "Korean");
+    console.log("✅ Noto Sans KR downloaded & registered");
+  } catch (err) {
+    console.warn("⚠️  폰트 다운로드 실패 (기본 폰트로 진행):", err.message);
+  }
 }
 
 await registerKoreanFont();
