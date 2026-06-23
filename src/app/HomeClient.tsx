@@ -528,6 +528,9 @@ export default function HomeClient() {
         {showTodayMenu && (
           <TodayMenuModal onClose={() => setShowTodayMenu(false)} />
         )}
+        {showNewMenuModal && (
+          <NewMenuModal onClose={() => setShowNewMenuModal(false)} />
+        )}
       </div>
     );
   }
@@ -605,6 +608,9 @@ export default function HomeClient() {
         <SiteFooter />
         {showTodayMenu && (
           <TodayMenuModal onClose={() => setShowTodayMenu(false)} />
+        )}
+        {showNewMenuModal && (
+          <NewMenuModal onClose={() => setShowNewMenuModal(false)} />
         )}
       </div>
     );
